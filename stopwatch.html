@@ -2,7 +2,11 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TACTICAL">
+<meta name="theme-color" content="#060608">
 <title>Tactical Stopwatch</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Digital+7&family=Segment7Standard&display=swap');
@@ -18,6 +22,7 @@ html, body {
   font-family: 'Teko', sans-serif;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
 }
 
 .app {
@@ -36,7 +41,7 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px 6px;
+  padding: 8px 14px 6px;
   border-bottom: 1px solid rgba(255,255,255,0.04);
   flex-shrink: 0;
 }
@@ -71,6 +76,7 @@ html, body {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 /* 時計エリア: 中央寄せ、固定サイズ */
@@ -79,7 +85,8 @@ html, body {
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
-  padding: 4px 0 2px;
+  height: 50%;
+  padding: 4px 0;
 }
 
 /* 下パネルエリア: 残りスペースを使う */
@@ -103,10 +110,8 @@ html, body {
 /* ===== WATCH TAB ===== */
 .clock-wrap {
   position: relative;
-  width: 50vw;
-  height: 50vw;
-  max-width: 50dvh;
-  max-height: 50dvh;
+  width: min(43dvh, 90vw);
+  height: min(43dvh, 90vw);
   flex-shrink: 0;
 }
 canvas { width: 100%; height: 100%; display: block; }
@@ -120,9 +125,9 @@ canvas { width: 100%; height: 100%; display: block; }
 
 .sets-lbl {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 22px; font-weight: 700;
+  font-size: clamp(18px, 4dvh, 26px); font-weight: 700;
   color: #ffcc00; letter-spacing: 3px;
-  min-height: 26px; line-height: 1;
+  min-height: 20px; line-height: 1;
   text-shadow: 0 0 12px #ffaa0088;
 }
 .elapsed-lbl {
@@ -133,6 +138,8 @@ canvas { width: 100%; height: 100%; display: block; }
   font-size: clamp(26px, 8vw, 36px);
   font-weight: 700; color: #fff;
   letter-spacing: 2px; line-height: 1;
+  will-change: color;
+  transform: translateZ(0);
 }
 #mainTime .d       { color: #fff; }
 #mainTime .d.ghost { color: #1a2030; }
@@ -142,9 +149,9 @@ canvas { width: 100%; height: 100%; display: block; }
 .count-flash-red    { animation: flash-red    0.6s ease-out; }
 .count-flash-yellow { animation: flash-yellow 0.6s ease-out; }
 .count-flash-blue   { animation: flash-blue   0.6s ease-out; }
-@keyframes flash-red    { 0%{color:#ff4422} 100%{color:#fff} }
-@keyframes flash-yellow { 0%{color:#ffee22} 100%{color:#fff} }
-@keyframes flash-blue   { 0%{color:#44eeff} 100%{color:#fff} }
+@keyframes flash-red    { 0%{color:#ff4422;transform:none} 100%{color:#fff;transform:none} }
+@keyframes flash-yellow { 0%{color:#ffee22;transform:none} 100%{color:#fff;transform:none} }
+@keyframes flash-blue   { 0%{color:#44eeff;transform:none} 100%{color:#fff;transform:none} }
 
 .divider {
   width: 60%; height: 1px;
@@ -242,7 +249,53 @@ canvas { width: 100%; height: 100%; display: block; }
 }
 .tempo-val .unit { font-size: 8px; letter-spacing: 1px; color: #00aa6655; }
 .tempo-sep { width: 1px; height: 40px; background: rgba(0,200,120,0.15); }
-.tempo-status { text-align: center; font-size: 11px; letter-spacing: 2px; color: #00aa66; margin-bottom: 6px; }
+.tempo-status { text-align: center; font-size: 11px; letter-spacing: 2px; color: #00aa66; margin-bottom: 4px; }
+
+/* TEMPO 3モード */
+.tempo-mode-bar {
+  display: flex; gap: 4px; justify-content: center;
+  margin-bottom: 6px;
+}
+.tmode-btn {
+  padding: 4px 12px; font-size: 10px; letter-spacing: 2px;
+  border: 1px solid #0a3322; border-radius: 6px;
+  background: rgba(0,20,12,0.6); color: #00aa66;
+  font-family: 'Teko', sans-serif; cursor: pointer;
+  touch-action: none;
+}
+.tmode-btn.active {
+  border-color: #00dd99; color: #00ffbb;
+  background: rgba(0,60,30,0.6);
+  box-shadow: 0 0 8px rgba(0,200,120,0.3);
+}
+.tempo-mode-desc {
+  text-align: center; font-size: 9px; letter-spacing: 1px;
+  color: #006644; margin-bottom: 6px;
+}
+.tempo-result-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; padding: 8px 12px;
+  background: rgba(0,30,20,0.5);
+  border: 1px solid rgba(0,200,120,0.15);
+  border-radius: 10px; margin-bottom: 6px;
+}
+.tempo-result-val {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 34px; font-weight: 700; color: #00dd99;
+  text-shadow: 0 0 12px rgba(0,200,140,0.6); line-height: 1;
+  min-width: 80px; text-align: center;
+}
+.tempo-result-unit {
+  font-size: 10px; letter-spacing: 1px; color: #00aa6677;
+}
+.tempo-result-sep {
+  width: 1px; height: 36px; background: rgba(0,200,120,0.2);
+}
+.tempo-avg-status {
+  text-align: center; font-size: 22px; font-weight: 700;
+  font-family: 'Rajdhani', sans-serif;
+  color: #00dd99; letter-spacing: 2px; margin-bottom: 4px;
+}
 .tempo-history { border-top: 1px solid rgba(0,200,120,0.1); padding-top: 6px; }
 .tempo-history-title { font-size: 8px; letter-spacing: 3px; color: #00aa6644; text-align: center; margin-bottom: 5px; }
 .tempo-hist-row {
@@ -295,8 +348,8 @@ canvas { width: 100%; height: 100%; display: block; }
   align-items: center; justify-content: center;
   touch-action: none; -webkit-user-select: none; user-select: none;
   transition: transform 0.1s;
-  width: clamp(60px, 17vw, 72px);
-  height: clamp(60px, 17vw, 72px);
+  width: clamp(64px, 16vw, 84px);
+  height: clamp(64px, 16vw, 84px);
   gap: 1px;
   flex-shrink: 0;
   position: relative;
@@ -358,9 +411,9 @@ canvas { width: 100%; height: 100%; display: block; }
 .tab-bar {
   display: flex;
   border-top: 1px solid rgba(255,255,255,0.06);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
   flex-shrink: 0;
-  background: rgba(4,6,10,0.95);
+  background: rgba(4,6,10,0.98);
 }
 .tab-item {
   flex: 1; display: flex; flex-direction: column;
@@ -437,8 +490,22 @@ canvas { width: 100%; height: 100%; display: block; }
         </div>
       </div>
 
-      <!-- TEMPO: テンポ計測 -->
+      <!-- TEMPO: テンポ計測 3モード -->
       <div class="lower-panel" id="panel-tempo">
+        <div class="tempo-mode-bar" id="tempoModeBar">
+          <button class="tmode-btn active" data-mode="single">SINGLE</button>
+          <button class="tmode-btn" data-mode="avg">AVG</button>
+          <button class="tmode-btn" data-mode="seiko">SEIKO</button>
+        </div>
+        <div class="tempo-mode-desc" id="tempoModeDesc">タップごとにテンポ表示</div>
+        <div class="tempo-result-row">
+          <div class="tempo-result-val" id="tempoResultBpm">—</div>
+          <div class="tempo-result-unit">RPM</div>
+          <div class="tempo-result-sep"></div>
+          <div class="tempo-result-val" id="tempoResultSec">—</div>
+          <div class="tempo-result-unit">sec</div>
+        </div>
+        <div class="tempo-avg-status" id="tempoAvgStatus" style="display:none;"></div>
         <div class="tempo-status" id="tempoStatus">PRESS TEMPO TO START</div>
         <div class="tempo-history" id="tempoHistory" style="display:none;">
           <div class="tempo-history-title">HISTORY</div>
@@ -1015,53 +1082,190 @@ canvas { width: 100%; height: 100%; display: block; }
   document.getElementById('soundBtn').addEventListener('click', toggleSound);
 
   // =====================
-  // TEMPO
+  // TEMPO 3モード
+  // single: タップごとに計測
+  // avg: 複数タップ → 長押し0.3sで平均
+  // seiko: 3ストローク（4タップ）で1分あたりのピッチ
   // =====================
-  var tempoMeasuring=false, tempoStartMs=0, tempoHistoryData=[];
+  var tempoMode = 'single';
+  var tempoHistoryData = [];
+
+  // Single mode
+  var tempoMeasuring = false, tempoStartMs = 0;
+
+  // Avg mode
+  var avgTaps = [], avgLongPressTimer = null, avgLongTriggered = false;
+
+  // Seiko mode
+  var seikoTaps = [];
+
+  var TEMPO_DESCS = {
+    single: 'タップごとにテンポ表示',
+    avg:    '複数タップ → 長押し0.3sで平均表示',
+    seiko:  '3ストローク（4タップ）で平均ピッチ表示'
+  };
+
+  // モード切替バー
+  document.getElementById('tempoModeBar').addEventListener('click', function(e) {
+    var btn = e.target.closest('.tmode-btn');
+    if (!btn) return;
+    tempoMode = btn.dataset.mode;
+    document.querySelectorAll('.tmode-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('tempoModeDesc').textContent = TEMPO_DESCS[tempoMode];
+    // リセット
+    tempoMeasuring = false; tempoStartMs = 0;
+    avgTaps = []; avgLongTriggered = false;
+    seikoTaps = [];
+    document.getElementById('tempoResultBpm').textContent = '—';
+    document.getElementById('tempoResultSec').textContent = '—';
+    document.getElementById('tempoStatus').textContent = 'PRESS TEMPO TO START';
+    document.getElementById('tempoAvgStatus').style.display = 'none';
+    document.getElementById('tempoAvgStatus').textContent = '';
+    document.getElementById('tempoBtn').classList.remove('measuring');
+    document.getElementById('tempoIcon').textContent = '↻';
+    document.getElementById('tempoLabel').textContent = 'TEMPO';
+    beep(660, 0.04, 0.15);
+  });
+
+  function showTempoResult(bpm, sec) {
+    document.getElementById('tempoResultBpm').textContent = bpm.toFixed(2);
+    document.getElementById('tempoResultSec').textContent = sec.toFixed(2);
+    tempoHistoryData.unshift({ bpm: bpm, sec: sec });
+    if (tempoHistoryData.length > 4) tempoHistoryData.pop();
+    renderTempoHistory();
+    beep(1320, 0.06, 0.3);
+    setTimeout(function(){ beep(1760, 0.07, 0.25); }, 80);
+  }
 
   function onTempoPress(e) {
     e.preventDefault();
-    var btn=document.getElementById('tempoBtn');
-    var status=document.getElementById('tempoStatus');
-    if (!tempoMeasuring) {
-      tempoMeasuring=true; tempoStartMs=performance.now();
+    switchTab('tempo');
+    var btn = document.getElementById('tempoBtn');
+    var status = document.getElementById('tempoStatus');
+    var now = performance.now();
+
+    if (tempoMode === 'single') {
+      // --- SINGLE: 2タップで1サイクル計測 ---
+      if (!tempoMeasuring) {
+        tempoMeasuring = true; tempoStartMs = now;
+        btn.classList.add('measuring');
+        document.getElementById('tempoIcon').textContent = '⏱';
+        document.getElementById('tempoLabel').textContent = 'STOP';
+        status.textContent = 'MEASURING...';
+        beep(880, 0.05, 0.25);
+      } else {
+        var cycleSec = (now - tempoStartMs) / 1000;
+        tempoMeasuring = false;
+        btn.classList.remove('measuring');
+        document.getElementById('tempoIcon').textContent = '↻';
+        document.getElementById('tempoLabel').textContent = 'TEMPO';
+        status.textContent = 'TAP AGAIN TO REMEASURE';
+        showTempoResult(60 / cycleSec, cycleSec);
+      }
+
+    } else if (tempoMode === 'avg') {
+      // --- AVG: タップを積み重ね、長押し0.3sで平均 ---
+      avgLongTriggered = false;
+      avgTaps.push(now);
+      var n = avgTaps.length;
       btn.classList.add('measuring');
-      document.getElementById('tempoIcon').textContent='⏱';
-      document.getElementById('tempoLabel').textContent='STOP';
-      status.textContent='MEASURING...';
-      // Auto switch to tempo tab
-      switchTab('tempo');
-      beep(880,0.05,0.25);
-    } else {
-      var cycleMs=performance.now()-tempoStartMs;
-      tempoMeasuring=false;
-      btn.classList.remove('measuring');
-      document.getElementById('tempoIcon').textContent='↻';
-      document.getElementById('tempoLabel').textContent='TEMPO';
-      var cycleSec=cycleMs/1000, bpm=60/cycleSec;
-      status.textContent='TAP AGAIN TO REMEASURE';
-      tempoHistoryData.unshift({bpm:bpm, sec:cycleSec});
-      if (tempoHistoryData.length>4) tempoHistoryData.pop();
-      renderTempoHistory();
-      beep(1320,0.06,0.3);
-      setTimeout(function(){ beep(1760,0.07,0.25); }, 80);
+      document.getElementById('tempoIcon').textContent = '⏱';
+      document.getElementById('tempoLabel').textContent = 'STOP';
+      // AVGタップカウント表示
+      var avgSt = document.getElementById('tempoAvgStatus');
+      avgSt.style.display = 'block';
+      avgSt.textContent = n + ' TAP';
+      if (n === 1) {
+        status.textContent = 'KEEP TAPPING...  HOLD 0.3s TO FINISH';
+        beep(880, 0.04, 0.2);
+      } else {
+        // 途中結果表示（前タップとの間隔）
+        var lastSec = (now - avgTaps[n-2]) / 1000;
+        document.getElementById('tempoResultBpm').textContent = (60/lastSec).toFixed(1);
+        document.getElementById('tempoResultSec').textContent = lastSec.toFixed(2);
+        beep(1100, 0.04, 0.2);
+      }
+      // 長押し検出（pointerdownで設定、pointerupでクリア）
+      avgLongPressTimer = setTimeout(function() {
+        if (avgTaps.length < 2) {
+          // タップ1回のみはリセット
+          avgTaps = [];
+          btn.classList.remove('measuring');
+          document.getElementById('tempoIcon').textContent = '↻';
+          document.getElementById('tempoLabel').textContent = 'TEMPO';
+          avgSt.style.display = 'none';
+          status.textContent = 'PRESS TEMPO TO START';
+          return;
+        }
+        avgLongTriggered = true;
+        // 全タップ間隔の平均
+        var total = avgTaps[avgTaps.length-1] - avgTaps[0];
+        var avgSec = (total / 1000) / (avgTaps.length - 1);
+        btn.classList.remove('measuring');
+        document.getElementById('tempoIcon').textContent = '↻';
+        document.getElementById('tempoLabel').textContent = 'TEMPO';
+        avgSt.textContent = avgTaps.length + ' TAP AVG';
+        status.textContent = 'AVERAGE OF ' + (avgTaps.length-1) + ' INTERVALS';
+        showTempoResult(60 / avgSec, avgSec);
+        avgTaps = [];
+      }, 300);
+
+    } else if (tempoMode === 'seiko') {
+      // --- SEIKO: 4タップ（3ストローク）で計測 ---
+      seikoTaps.push(now);
+      var sn = seikoTaps.length;
+      btn.classList.add('measuring');
+      document.getElementById('tempoIcon').textContent = '⏱';
+      document.getElementById('tempoLabel').textContent = '' + sn + '/4';
+      beep(sn === 4 ? 1320 : 880, 0.04, 0.2);
+
+      var avgSt2 = document.getElementById('tempoAvgStatus');
+      avgSt2.style.display = 'block';
+      avgSt2.textContent = sn + ' / 4';
+
+      if (sn < 4) {
+        status.textContent = 'TAP ' + (4 - sn) + ' MORE...';
+      } else {
+        // 3ストローク（4タップ間）の合計時間 → BPM
+        var seikoTotal = (seikoTaps[3] - seikoTaps[0]) / 1000;
+        var seikoAvgSec = seikoTotal / 3;
+        btn.classList.remove('measuring');
+        document.getElementById('tempoIcon').textContent = '↻';
+        document.getElementById('tempoLabel').textContent = 'TEMPO';
+        avgSt2.textContent = '3 STROKES';
+        status.textContent = '3-STROKE AVERAGE';
+        showTempoResult(60 / seikoAvgSec, seikoAvgSec);
+        seikoTaps = [];
+      }
+    }
+  }
+
+  function onTempoPressUp(e) {
+    // AVGモードの長押しタイマーをクリア（短タップ時）
+    if (tempoMode === 'avg' && !avgLongTriggered) {
+      clearTimeout(avgLongPressTimer);
     }
   }
 
   function renderTempoHistory() {
-    var hist=document.getElementById('tempoHistory'), list=document.getElementById('tempoHistoryList');
-    if (!tempoHistoryData.length) { hist.style.display='none'; return; }
-    hist.style.display='block';
-    list.innerHTML=tempoHistoryData.map(function(h,i){
+    var hist = document.getElementById('tempoHistory');
+    var list = document.getElementById('tempoHistoryList');
+    if (!tempoHistoryData.length) { hist.style.display = 'none'; return; }
+    hist.style.display = 'block';
+    list.innerHTML = tempoHistoryData.map(function(h, i) {
       return '<div class="tempo-hist-row">'
-        +'<span class="hnum">'+(i+1)+'</span>'
-        +'<span class="tempo-hist-val">'+h.bpm.toFixed(2)+'<span class="tempo-hist-unit">RPM</span></span>'
-        +'<span class="tempo-hist-val">'+h.sec.toFixed(2)+'<span class="tempo-hist-unit">sec/rev</span></span>'
-        +'</div>';
+        + '<span class="hnum">' + (i+1) + '</span>'
+        + '<span class="tempo-hist-val">' + h.bpm.toFixed(2) + '<span class="tempo-hist-unit">RPM</span></span>'
+        + '<span class="tempo-hist-val">' + h.sec.toFixed(2) + '<span class="tempo-hist-unit">sec</span></span>'
+        + '</div>';
     }).join('');
   }
 
-  document.getElementById('tempoBtn').addEventListener('pointerdown', onTempoPress);
+  var tempoBtn = document.getElementById('tempoBtn');
+  tempoBtn.addEventListener('pointerdown', onTempoPress);
+  tempoBtn.addEventListener('pointerup',   onTempoPressUp);
+  tempoBtn.addEventListener('pointercancel', function(){ clearTimeout(avgLongPressTimer); });
 
   // Interval selector
   document.getElementById('intervalBar').addEventListener('click', function(e) {
