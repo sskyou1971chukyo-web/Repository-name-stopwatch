@@ -100,7 +100,7 @@ html, body {
 .lower-panel {
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
-  padding: 6px 14px 4px;
+  padding: 6px 14px 2px;
   opacity: 0; pointer-events: none;
   transition: opacity 0.18s;
   overflow: hidden;
@@ -110,8 +110,8 @@ html, body {
 /* ===== WATCH TAB ===== */
 .clock-wrap {
   position: relative;
-  width: min(43dvh, 90vw);
-  height: min(43dvh, 90vw);
+  width: min(41dvh, 88vw);
+  height: min(41dvh, 88vw);
   flex-shrink: 0;
 }
 canvas { width: 100%; height: 100%; display: block; }
@@ -495,7 +495,7 @@ canvas { width: 100%; height: 100%; display: block; }
         <div class="tempo-mode-bar" id="tempoModeBar">
           <button class="tmode-btn active" data-mode="single">SINGLE</button>
           <button class="tmode-btn" data-mode="avg">AVG</button>
-          <button class="tmode-btn" data-mode="seiko">SEIKO</button>
+          <button class="tmode-btn" data-mode="seiko">3CYCLES</button>
         </div>
         <div class="tempo-mode-desc" id="tempoModeDesc">タップごとにテンポ表示</div>
         <div class="tempo-result-row">
@@ -672,40 +672,65 @@ canvas { width: 100%; height: 100%; display: block; }
   function playB(isZero) {
     if (!soundOn) return;
     var c = getCtx(), t = c.currentTime;
+
     if (isZero) {
-      // 10秒: 3000Hz 0.8秒
+      // ===== 音B再現: 10秒カウント =====
+      // 実測: 880Hz主音 + 2640Hz倍音(比率0.223)
+      // エンベロープ: attack~160ms → フラット1100ms → 緩やか減衰1800ms → 合計1秒に短縮
+      // 短縮比率: 実測2.86s → 指定1.0s (比率0.35)
+      // フラット区間: 1100ms×0.35 = ~385ms → 0.38s
+      // 減衰区間: 1800ms×0.35 = ~630ms → 残り0.62s
+      // フラット0.4s → 長い余韻2.2s → 合計2.6s
+      var flatEnd = t + 0.015 + 0.40;
+      var totalDur = 2.6;
+
+      // 主音 880Hz
       var o1 = c.createOscillator(), g1 = c.createGain();
       o1.connect(g1); g1.connect(c.destination);
-      o1.type = 'sine'; o1.frequency.value = 3000;
+      o1.type = 'sine'; o1.frequency.value = 880;
       g1.gain.setValueAtTime(0, t);
-      g1.gain.linearRampToValueAtTime(0.40, t + 0.003);
-      g1.gain.setValueAtTime(0.40, t + 0.70);
-      g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.80);
-      o1.start(t); o1.stop(t + 0.82);
+      g1.gain.linearRampToValueAtTime(0.44, t + 0.015);
+      g1.gain.setValueAtTime(0.44, flatEnd);
+      g1.gain.exponentialRampToValueAtTime(0.0001, t + totalDur);
+      o1.start(t); o1.stop(t + totalDur + 0.02);
+
+      // 倍音 2640Hz (振幅比0.223)
       var o2 = c.createOscillator(), g2 = c.createGain();
       o2.connect(g2); g2.connect(c.destination);
-      o2.type = 'sine'; o2.frequency.value = 1500;
+      o2.type = 'sine'; o2.frequency.value = 2640;
       g2.gain.setValueAtTime(0, t);
-      g2.gain.linearRampToValueAtTime(0.10, t + 0.003);
-      g2.gain.setValueAtTime(0.10, t + 0.70);
-      g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.80);
-      o2.start(t); o2.stop(t + 0.82);
+      g2.gain.linearRampToValueAtTime(0.10, t + 0.015);
+      g2.gain.setValueAtTime(0.10, flatEnd);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t + totalDur);
+      o2.start(t); o2.stop(t + totalDur + 0.02);
+
     } else {
-      // 8・9秒: 440Hz 0.2秒
+      // ===== 音A再現: 8・9秒カウント =====
+      // 実測: 440Hz主音 + 1320Hz倍音(比率0.208)
+      // エンベロープ: attack~5ms → フラット持続(ほぼ全域) → 急激カット
+      // 指定0.5秒継続: attack5ms → フラット480ms → 急カット15ms
+      var dur = 0.5;
+      var flatEndA = t + 0.005 + 0.475;  // attack + flat
+
+      // 主音 440Hz
       var o1 = c.createOscillator(), g1 = c.createGain();
       o1.connect(g1); g1.connect(c.destination);
       o1.type = 'sine'; o1.frequency.value = 440;
       g1.gain.setValueAtTime(0, t);
-      g1.gain.linearRampToValueAtTime(0.38, t + 0.004);
-      g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.20);
-      o1.start(t); o1.stop(t + 0.22);
+      g1.gain.linearRampToValueAtTime(0.40, t + 0.005);  // 急速attack
+      g1.gain.setValueAtTime(0.40, flatEndA);              // フラット維持
+      g1.gain.exponentialRampToValueAtTime(0.0001, t + dur); // 急カット
+      o1.start(t); o1.stop(t + dur + 0.01);
+
+      // 倍音 1320Hz (振幅比0.208)
       var o2 = c.createOscillator(), g2 = c.createGain();
       o2.connect(g2); g2.connect(c.destination);
       o2.type = 'sine'; o2.frequency.value = 1320;
       g2.gain.setValueAtTime(0, t);
-      g2.gain.linearRampToValueAtTime(0.12, t + 0.003);
-      g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
-      o2.start(t); o2.stop(t + 0.20);
+      g2.gain.linearRampToValueAtTime(0.083, t + 0.005);
+      g2.gain.setValueAtTime(0.083, flatEndA);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o2.start(t); o2.stop(t + dur + 0.01);
     }
   }
   function beep(freq, dur, vol) {
@@ -1085,7 +1110,7 @@ canvas { width: 100%; height: 100%; display: block; }
   // TEMPO 3モード
   // single: タップごとに計測
   // avg: 複数タップ → 長押し0.3sで平均
-  // seiko: 3ストローク（4タップ）で1分あたりのピッチ
+  // 3cycles: 4タップ（3サイクル）で1分あたりのピッチ
   // =====================
   var tempoMode = 'single';
   var tempoHistoryData = [];
@@ -1097,12 +1122,12 @@ canvas { width: 100%; height: 100%; display: block; }
   var avgTaps = [], avgLongPressTimer = null, avgLongTriggered = false;
 
   // Seiko mode
-  var seikoTaps = [];
+  var threeCycleTaps = [];
 
   var TEMPO_DESCS = {
     single: 'タップごとにテンポ表示',
     avg:    '複数タップ → 長押し0.3sで平均表示',
-    seiko:  '3ストローク（4タップ）で平均ピッチ表示'
+    seiko:  '4タップ（3サイクル）で平均ピッチ表示'
   };
 
   // モード切替バー
@@ -1116,7 +1141,7 @@ canvas { width: 100%; height: 100%; display: block; }
     // リセット
     tempoMeasuring = false; tempoStartMs = 0;
     avgTaps = []; avgLongTriggered = false;
-    seikoTaps = [];
+    threeCycleTaps = [];
     document.getElementById('tempoResultBpm').textContent = '—';
     document.getElementById('tempoResultSec').textContent = '—';
     document.getElementById('tempoStatus').textContent = 'PRESS TEMPO TO START';
@@ -1209,15 +1234,15 @@ canvas { width: 100%; height: 100%; display: block; }
         status.textContent = 'AVERAGE OF ' + (avgTaps.length-1) + ' INTERVALS';
         showTempoResult(60 / avgSec, avgSec);
         avgTaps = [];
-      }, 300);
+      }, 500);
 
-    } else if (tempoMode === 'seiko') {
-      // --- SEIKO: 4タップ（3ストローク）で計測 ---
-      seikoTaps.push(now);
-      var sn = seikoTaps.length;
+    } else if (tempoMode === 'seiko') { // 3CYCLESモード
+      // --- 3CYCLES: 4タップ（3サイクル）で計測 ---
+      threeCycleTaps.push(now);
+      var sn = threeCycleTaps.length;
       btn.classList.add('measuring');
       document.getElementById('tempoIcon').textContent = '⏱';
-      document.getElementById('tempoLabel').textContent = '' + sn + '/4';
+      document.getElementById('tempoLabel').textContent = sn + '/4';
       beep(sn === 4 ? 1320 : 880, 0.04, 0.2);
 
       var avgSt2 = document.getElementById('tempoAvgStatus');
@@ -1228,15 +1253,15 @@ canvas { width: 100%; height: 100%; display: block; }
         status.textContent = 'TAP ' + (4 - sn) + ' MORE...';
       } else {
         // 3ストローク（4タップ間）の合計時間 → BPM
-        var seikoTotal = (seikoTaps[3] - seikoTaps[0]) / 1000;
-        var seikoAvgSec = seikoTotal / 3;
+        var cycleTotal = (threeCycleTaps[3] - threeCycleTaps[0]) / 1000;
+        var cycleAvgSec = cycleTotal / 3;
         btn.classList.remove('measuring');
         document.getElementById('tempoIcon').textContent = '↻';
         document.getElementById('tempoLabel').textContent = 'TEMPO';
-        avgSt2.textContent = '3 STROKES';
-        status.textContent = '3-STROKE AVERAGE';
-        showTempoResult(60 / seikoAvgSec, seikoAvgSec);
-        seikoTaps = [];
+        avgSt2.textContent = '3 CYCLES';
+        status.textContent = '3-CYCLE AVERAGE';
+        showTempoResult(60 / cycleAvgSec, cycleAvgSec);
+        threeCycleTaps = [];
       }
     }
   }
