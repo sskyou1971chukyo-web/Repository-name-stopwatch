@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tactical Stopwatch</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .phone {
+    width: 280px;
+    background: radial-gradient(ellipse at center, #1a1a1a 0%, #080808 100%);
+    border-radius: 40px;
+    border: 3px solid #222;
+    padding: 30px 20px 28px;
+    box-shadow:
+      0 0 60px rgba(0,0,0,0.9),
+      inset 0 0 40px rgba(0,0,0,0.5),
+      0 0 2px #444;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .phone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.03) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Ccircle cx='1' cy='1' r='0.5' fill='%23ffffff08'/%3E%3C/svg%3E");
+    border-radius: 38px;
+    pointer-events: none;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-bottom: 10px;
+    padding-right: 4px;
+  }
+
+  .status-bar span {
+    color: #aaa;
+    font-size: 9px;
+  }
+
+  .clock-container {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    margin: 0 auto 20px;
+  }
+
+  canvas {
+    position: absolute;
+    top: 0; left: 0;
+  }
+
+  .center-display {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 10;
+  }
+
+  .label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 7px;
+    color: #ffdd00;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+    opacity: 0.9;
+  }
+
+  .main-time {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffdd00;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(255,220,0,0.8), 0 0 40px rgba(255,180,0,0.4);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .divider {
+    width: 60%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #ffdd00, transparent);
+    margin: 4px auto;
+    opacity: 0.5;
+  }
+
+  .lap-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 7px;
+    color: #00bfff;
+    letter-spacing: 2px;
+    margin-top: 4px;
+    margin-bottom: 2px;
+  }
+
+  .lap-count {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    color: #00bfff;
+    text-shadow: 0 0 15px rgba(0,191,255,0.9);
+  }
+
+  .buttons {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 4px;
+  }
+
+  .btn {
+    border: none;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .btn:active { transform: scale(0.93); }
+
+  .btn-sm {
+    width: 54px;
+    height: 54px;
+    font-size: 8px;
+    gap: 2px;
+  }
+
+  .btn-lg {
+    width: 72px;
+    height: 72px;
+    font-size: 9px;
+  }
+
+  .btn-reset {
+    background: radial-gradient(circle at 40% 35%, #555, #222);
+    color: #aaa;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+    border: 2px solid #333;
+  }
+
+  .btn-reset:hover { box-shadow: 0 4px 16px rgba(100,100,100,0.3), inset 0 1px 0 rgba(255,255,255,0.1); }
+
+  .btn-start {
+    background: radial-gradient(circle at 40% 35%, #eecc00, #aa8800);
+    color: #000;
+    box-shadow: 0 4px 20px rgba(255,200,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+    border: 2px solid #cc9900;
+  }
+
+  .btn-start:hover { box-shadow: 0 4px 30px rgba(255,200,0,0.7), inset 0 1px 0 rgba(255,255,255,0.2); }
+
+  .btn-split {
+    background: radial-gradient(circle at 40% 35%, #555, #222);
+    color: #aaa;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+    border: 2px solid #333;
+  }
+
+  .btn-split:hover { box-shadow: 0 4px 16px rgba(100,100,100,0.3), inset 0 1px 0 rgba(255,255,255,0.1); }
+
+  .icon { font-size: 14px; line-height: 1; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status-bar">
+    <span>▲▲▲</span>
+    <span>WiFi</span>
+    <span>🔋</span>
+  </div>
+
+  <div class="clock-container">
+    <canvas id="clockCanvas" width="220" height="220"></canvas>
+    <div class="center-display">
+      <div class="label">MINUTE RING</div>
+      <div class="main-time" id="mainTime">00:00.0</div>
+      <div class="divider"></div>
+      <div class="lap-label">LAP COUNTER</div>
+      <div class="lap-count" id="lapCount">00 / 10</div>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button class="btn btn-sm btn-reset" id="resetBtn" onclick="resetWatch()">
+      <span class="icon">↺</span>
+      <span>RESET</span>
+    </button>
+    <button class="btn btn-lg btn-start" id="startBtn" onclick="toggleWatch()">
+      <span id="startLabel">START/STOP</span>
+    </button>
+    <button class="btn btn-sm btn-split" onclick="splitWatch()">
+      <span class="icon">⊞</span>
+      <span>SPLIT</span>
+    </button>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById('clockCanvas');
+  const ctx = canvas.getContext('2d');
+  const cx = 110, cy = 110;
+
+  let running = false;
+  let elapsed = 0;
+  let lastTime = null;
+  let lapCount = 0;
+  let maxLaps = 10;
+  let rafId = null;
+  let secondHandAngle = 0;
+
+  function drawClock(ms) {
+    ctx.clearRect(0, 0, 220, 220);
+
+    const totalSec = ms / 1000;
+    const seconds = totalSec % 60;
+    const minutes = Math.floor(totalSec / 60) % 60;
+
+    // ---- Outer ring (seconds) ----
+    const outerR = 105;
+    // Background ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 8;
+    ctx.stroke();
+
+    // Tick marks
+    for (let i = 0; i < 60; i++) {
+      const angle = (i / 60) * Math.PI * 2 - Math.PI / 2;
+      const isMajor = i % 5 === 0;
+      const len = isMajor ? 10 : 5;
+      const r1 = outerR - 2;
+      const r2 = r1 - len;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+      ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
+      ctx.strokeStyle = isMajor ? '#00bfff' : '#005577';
+      ctx.lineWidth = isMajor ? 2 : 1;
+      ctx.stroke();
+
+      if (isMajor) {
+        const labelR = r2 - 8;
+        const num = i === 0 ? 60 : i;
+        ctx.fillStyle = '#007799';
+        ctx.font = '7px Orbitron, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(num, cx + Math.cos(angle) * labelR, cy + Math.sin(angle) * labelR);
+      }
+    }
+
+    // Second progress arc
+    const secAngle = (seconds / 60) * Math.PI * 2 - Math.PI / 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerR, -Math.PI / 2, secAngle);
+    ctx.strokeStyle = '#00bfff';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Second hand dot
+    ctx.beginPath();
+    ctx.arc(
+      cx + Math.cos(secAngle) * outerR,
+      cy + Math.sin(secAngle) * outerR,
+      5, 0, Math.PI * 2
+    );
+    ctx.fillStyle = '#00eeff';
+    ctx.shadowColor = '#00bfff';
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // ---- Middle ring (minutes) ----
+    const midR = 82;
+    ctx.beginPath();
+    ctx.arc(cx, cy, midR, 0, Math.PI * 2);
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    for (let i = 0; i < 60; i++) {
+      const angle = (i / 60) * Math.PI * 2 - Math.PI / 2;
+      const isMajor = i % 5 === 0;
+      const len = isMajor ? 7 : 4;
+      const r1 = midR - 1;
+      const r2 = r1 - len;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+      ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
+      ctx.strokeStyle = isMajor ? '#ffaa00' : '#553300';
+      ctx.lineWidth = isMajor ? 2 : 1;
+      ctx.stroke();
+    }
+
+    // Minute progress arc
+    const minAngle = (minutes / 60) * Math.PI * 2 - Math.PI / 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, midR, -Math.PI / 2, minAngle);
+    ctx.strokeStyle = '#ffaa00';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Minute hand dot
+    ctx.beginPath();
+    ctx.arc(
+      cx + Math.cos(minAngle) * midR,
+      cy + Math.sin(minAngle) * midR,
+      4, 0, Math.PI * 2
+    );
+    ctx.fillStyle = '#ffcc00';
+    ctx.shadowColor = '#ffaa00';
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // ---- Inner circle background ----
+    const innerR = 66;
+    ctx.beginPath();
+    ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fill();
+    ctx.strokeStyle = '#1a3a4a';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Center glow
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, innerR);
+    grad.addColorStop(0, 'rgba(0,50,80,0.3)');
+    grad.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
+  function formatTime(ms) {
+    const totalMs = Math.floor(ms);
+    const min = Math.floor(totalMs / 60000);
+    const sec = Math.floor((totalMs % 60000) / 1000);
+    const tenth = Math.floor((totalMs % 1000) / 100);
+    return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${tenth}`;
+  }
+
+  function loop(ts) {
+    if (!lastTime) lastTime = ts;
+    const delta = ts - lastTime;
+    lastTime = ts;
+    elapsed += delta;
+
+    document.getElementById('mainTime').textContent = formatTime(elapsed);
+    drawClock(elapsed);
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function toggleWatch() {
+    if (!running) {
+      running = true;
+      lastTime = null;
+      document.getElementById('startLabel').textContent = 'PAUSE';
+      rafId = requestAnimationFrame(loop);
+    } else {
+      running = false;
+      cancelAnimationFrame(rafId);
+      document.getElementById('startLabel').textContent = 'START/STOP';
+    }
+  }
+
+  function resetWatch() {
+    running = false;
+    cancelAnimationFrame(rafId);
+    elapsed = 0;
+    lapCount = 0;
+    lastTime = null;
+    document.getElementById('startLabel').textContent = 'START/STOP';
+    document.getElementById('mainTime').textContent = '00:00.0';
+    document.getElementById('lapCount').textContent = '00 / 10';
+    drawClock(0);
+  }
+
+  function splitWatch() {
+    if (lapCount < maxLaps) lapCount++;
+    document.getElementById('lapCount').textContent =
+      `${String(lapCount).padStart(2,'0')} / ${maxLaps}`;
+  }
+
+  drawClock(0);
+</script>
+</body>
+</html>
