@@ -3,1406 +3,390 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Tactical Stopwatch</title>
+<title>デザイン提案</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Digital+7&family=Segment7Standard&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Teko:wght@500;600&display=swap');
-
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
 html, body {
-  min-height: 100%;
+  height: 100%;
+  overflow: hidden; /* スクロール完全禁止 */
   background: #060608;
-  font-family: 'Teko', sans-serif;
-  display: flex;
-  justify-content: center;
+  font-family: 'Helvetica Neue', sans-serif;
 }
 
+/* ========== 全体レイアウト: 3ゾーン固定 ========== */
 .app {
   width: 100%;
-  max-width: 420px;
-  min-height: 100vh;
+  max-width: 430px;
+  height: 100dvh; /* dynamic viewport height: ノッチ・ホームバー考慮 */
+  margin: 0 auto;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto; /* header / main / buttons / tabs */
   background: radial-gradient(ellipse at 50% 10%, #141820 0%, #060608 70%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px 16px 32px;
+  overflow: hidden;
 }
 
-/* Header */
+/* ========== HEADER ========== */
 .header {
-  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 .header-title {
-  font-family: 'Russo One', sans-serif;
-  font-size: 13px;
-  color: #334;
+  font-size: 11px;
   letter-spacing: 4px;
+  color: #334;
+  font-weight: 600;
 }
-#soundBtn {
-  background: none;
-  border: 1px solid #223;
-  border-radius: 20px;
-  font-size: 16px;
-  padding: 4px 10px;
-  cursor: pointer;
-  color: #00bfff;
-  border-color: #00bfff55;
-  transition: opacity 0.2s;
-}
-#soundBtn:active { opacity: 0.6; }
-
-/* Training settings */
-.training-bar {
-  width: 100%;
-  max-width: 360px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 10px;
-  padding: 8px 12px;
-  background: rgba(0,191,255,0.04);
-  border: 1px solid rgba(0,191,255,0.1);
-  border-radius: 10px;
-}
-.training-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-.training-lbl {
-  font-family: 'Teko', sans-serif;
-  font-size: 10px;
-  letter-spacing: 2px;
-  color: #445;
-}
-.training-input-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.training-input {
-  background: rgba(0,0,0,0.4);
-  border: 1px solid #1a3a55;
-  border-radius: 6px;
-  color: #00bfff;
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-  font-size: 15px;
-  text-align: center;
-  width: 36px;
-  padding: 2px 0;
-  outline: none;
-}
-.training-input:focus { border-color: #00bfff; }
-.training-input-sep {
-  color: #446;
-  font-size: 14px;
-  font-weight: bold;
-}
-.training-active-lbl {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  color: #ffcc00;
-  min-height: 28px;
-  text-shadow: 0 0 10px #ffaa0088;
-  line-height: 1;
+.header-right { display: flex; gap: 8px; align-items: center; }
+.sound-btn {
+  background: none; border: none; font-size: 16px; cursor: pointer;
+  padding: 4px; border-radius: 6px;
 }
 .interval-bar {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  display: flex; gap: 3px;
 }
 .ivl-btn {
-  background: none;
-  border: 1px solid #00bfff44;
-  border-radius: 12px;
-  font-family: 'Teko', sans-serif;
-  font-size: 13px;
-  letter-spacing: 1px;
-  padding: 2px 7px;
+  padding: 3px 7px; font-size: 9px; letter-spacing: 1px;
+  border: 1px solid #1a2a3a; border-radius: 4px;
+  background: rgba(0,16,32,0.6); color: #334;
   cursor: pointer;
-  color: #00bfff99;
-  transition: all 0.15s;
 }
-.ivl-btn:hover { color: #00bfff; border-color: #00bfff88; }
-.ivl-btn.active {
-  background: rgba(0,191,255,0.15);
-  border-color: #00bfff;
-  color: #44eeff;
-  box-shadow: 0 0 8px rgba(0,191,255,0.4);
-}
+.ivl-btn.active { border-color: #00bfff44; color: #00bfff; }
 
-/* Clock */
+/* ========== MAIN AREA: タブで切り替え ========== */
+.main {
+  overflow: hidden;
+  position: relative;
+}
+.tab-panel {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 8px 16px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.tab-panel.active { opacity: 1; pointer-events: all; }
+
+/* ---- STOPWATCH タブ ---- */
 .clock-wrap {
   position: relative;
-  width: min(300px, 82vw);
-  height: min(300px, 82vw);
-  margin-bottom: 20px;
+  width: min(240px, 60vw);
+  height: min(240px, 60vw);
+  margin-bottom: 10px;
+  flex-shrink: 0;
 }
-canvas { width: 100%; height: 100%; display: block; }
-
+.clock-wrap canvas { width: 100%; height: 100%; display: block; }
 .center-display {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  pointer-events: none;
-  width: 130px;
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
 }
-.lbl {
-  font-family: 'Teko', sans-serif;
-  font-size: 10px;
-  color: #ffdd00aa;
-  letter-spacing: 3px;
-  margin-bottom: 2px;
-}
-#mainTime {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: clamp(28px, 8vw, 38px);
+.main-time {
+  font-size: clamp(28px, 9vw, 40px);
   font-weight: 700;
-  color: #ffdd00;
-  text-shadow: 0 0 20px rgba(255,220,0,0.9), 0 0 40px rgba(255,180,0,0.4);
+  color: #fff;
+  letter-spacing: 2px;
   line-height: 1;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
-#mainTime .d {
-  display: inline-block;
-  width: 0.6em;
-  text-align: center;
-}
-#mainTime .sep {
-  display: inline-block;
-  width: 0.25em;
-  text-align: center;
-}
-#mainTime .d.ghost, #mainTime .sep.ghost {
-  color: rgba(255,221,0,0.15);
-  text-shadow: none;
-}
-/* -2: red, -1: yellow, 0: blue */
-@keyframes countFlashRed {
-  0%   { color: #fff; text-shadow: 0 0 30px #fff, 0 0 60px #ff2200, 0 0 100px rgba(255,50,0,0.8); }
-  40%  { color: #ff4422; text-shadow: 0 0 20px rgba(255,60,0,0.9), 0 0 40px rgba(255,40,0,0.4); }
-  100% { color: #ffdd00; text-shadow: 0 0 20px rgba(255,220,0,0.9), 0 0 40px rgba(255,180,0,0.4); }
-}
-@keyframes countFlashYellow {
-  0%   { color: #fff; text-shadow: 0 0 30px #fff, 0 0 60px #ffee00, 0 0 100px rgba(255,230,0,0.8); }
-  40%  { color: #ffee22; text-shadow: 0 0 20px rgba(255,230,0,0.9), 0 0 40px rgba(255,200,0,0.4); }
-  100% { color: #ffdd00; text-shadow: 0 0 20px rgba(255,220,0,0.9), 0 0 40px rgba(255,180,0,0.4); }
-}
-@keyframes countFlashBlue {
-  0%   { color: #fff; text-shadow: 0 0 30px #fff, 0 0 60px #00bfff, 0 0 100px rgba(0,191,255,0.8); }
-  40%  { color: #44eeff; text-shadow: 0 0 20px rgba(0,200,255,0.9), 0 0 40px rgba(0,180,255,0.4); }
-  100% { color: #ffdd00; text-shadow: 0 0 20px rgba(255,220,0,0.9), 0 0 40px rgba(255,180,0,0.4); }
-}
-@keyframes countFlashSepRed {
-  0%   { color: #fff; text-shadow: 0 0 20px #fff, 0 0 50px #ff2200, 0 0 80px rgba(255,50,0,0.8); }
-  40%  { color: #ff4422; text-shadow: 0 0 8px rgba(255,60,0,0.6); }
-  100% { color: #00bfff; text-shadow: 0 0 8px rgba(0,191,255,0.6); }
-}
-@keyframes countFlashSepYellow {
-  0%   { color: #fff; text-shadow: 0 0 20px #fff, 0 0 50px #ffee00, 0 0 80px rgba(255,230,0,0.8); }
-  40%  { color: #ffee22; text-shadow: 0 0 8px rgba(255,230,0,0.6); }
-  100% { color: #00bfff; text-shadow: 0 0 8px rgba(0,191,255,0.6); }
-}
-@keyframes countFlashSepBlue {
-  0%   { color: #fff; text-shadow: 0 0 20px #fff, 0 0 50px #00bfff, 0 0 80px rgba(0,191,255,0.8); }
-  40%  { color: #44eeff; text-shadow: 0 0 8px rgba(0,191,255,0.6); }
-  100% { color: #00bfff; text-shadow: 0 0 8px rgba(0,191,255,0.6); }
-}
-#mainTime.count-flash-red  { animation: countFlashRed    0.6s ease-out forwards; }
-#mainTime.count-flash-yellow { animation: countFlashYellow 0.6s ease-out forwards; }
-#mainTime.count-flash-blue { animation: countFlashBlue   0.6s ease-out forwards; }
-#mainTime.count-flash-red    .sep:not(.ghost) { animation: countFlashSepRed    0.6s ease-out forwards; }
-#mainTime.count-flash-yellow .sep:not(.ghost) { animation: countFlashSepYellow 0.6s ease-out forwards; }
-#mainTime.count-flash-blue   .sep:not(.ghost) { animation: countFlashSepBlue   0.6s ease-out forwards; }
-.current-lap-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  margin-top: 2px;
-}
-.current-lap-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-}
-.current-lap-lbl {
-  font-family: 'Teko', sans-serif;
-  font-size: 9px;
-  color: #00bfffaa;
+.sub-time {
+  font-size: 11px;
+  color: #334;
   letter-spacing: 2px;
-  min-width: 28px;
-  text-align: right;
+  margin-top: 4px;
 }
-.current-lap-time {
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-  font-size: clamp(12px, 3.5vw, 15px);
-  color: #00bfff;
-  text-shadow: 0 0 10px rgba(0,191,255,0.6);
-  display: flex;
-  align-items: center;
-}
-.current-lap-time .d { display:inline-block; width:0.6em; text-align:center; }
-.current-lap-time .sep { display:inline-block; width:0.25em; text-align:center; }
-.current-lap-time .d.ghost, .current-lap-time .sep.ghost { color:rgba(0,191,255,0.15); text-shadow:none; }
-.frozen-divider {
-  width: 70%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #ffdd0033, transparent);
-  margin: 4px auto;
-  display: none;
-}
-.frozen-divider.visible { display: block; }
-.frozen-lap-wrap { display:none; flex-direction:column; gap:1px; }
-.frozen-lap-wrap.visible { display:flex; }
-.frozen-lap-row { display:flex; align-items:center; justify-content:center; gap:5px; }
-.frozen-lap-lbl { font-family:'Teko',sans-serif; font-size:9px; color:#ffdd0077; letter-spacing:2px; min-width:28px; text-align:right; }
-.frozen-lap-time { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(12px,3.5vw,15px); color:#ffdd00; text-shadow:0 0 10px rgba(255,220,0,0.5); display:flex; align-items:center; }
-.frozen-lap-time .d { display:inline-block; width:0.6em; text-align:center; }
-.frozen-lap-time .sep { display:inline-block; width:0.25em; text-align:center; }
-.frozen-lap-time .d.ghost, .frozen-lap-time .sep.ghost { color:rgba(255,221,0,0.15); text-shadow:none; }
-.divider {
-  width: 70%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #ffdd0055, transparent);
-  margin: 5px auto;
-}
-.lap-lbl {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 7px;
-  color: #00bfffaa;
-  letter-spacing: 2px;
-  margin-bottom: 2px;
-}
-#lapCount {
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(12px, 3.5vw, 16px);
-  color: #00bfff;
-  text-shadow: 0 0 15px rgba(0,191,255,0.8);
+.sets-lbl {
+  font-size: 18px; font-weight: 700;
+  color: #ffcc00;
+  letter-spacing: 3px;
+  min-height: 22px;
 }
 
-/* Buttons */
+/* LAP LIST in stopwatch tab */
+.lap-list-inline {
+  width: 100%;
+  max-height: 100px;
+  overflow-y: auto;
+  margin-top: 6px;
+}
+.lap-row {
+  display: flex; justify-content: space-between;
+  padding: 4px 8px; font-size: 11px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  color: #445;
+}
+.lap-row .lap-num { color: #223; width: 28px; }
+.lap-row .lap-time { color: #00bfff; }
+.lap-row .lap-split { color: #334; }
+
+/* ---- TEMPO タブ ---- */
+.tempo-panel {
+  width: 100%;
+}
+.tempo-main {
+  display: flex; justify-content: space-around; align-items: center;
+  padding: 16px;
+  background: rgba(0,30,20,0.5);
+  border: 1px solid rgba(0,200,120,0.15);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.tempo-val {
+  text-align: center;
+}
+.tempo-val .label { font-size: 9px; letter-spacing: 2px; color: #00aa6688; margin-bottom: 2px; }
+.tempo-val .value { font-size: 36px; font-weight: 700; color: #00dd99; line-height: 1; }
+.tempo-val .unit  { font-size: 8px; letter-spacing: 1px; color: #00aa6655; }
+.tempo-sep { width: 1px; height: 40px; background: rgba(0,200,120,0.15); }
+.tempo-status { text-align:center; font-size:9px; letter-spacing:2px; color:#00aa66; margin-bottom:8px; }
+.tempo-history { border-top: 1px solid rgba(0,200,120,0.1); padding-top: 8px; }
+.tempo-history-title { font-size:8px; letter-spacing:3px; color:#00aa6644; text-align:center; margin-bottom:6px; }
+.tempo-hist-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 8px; margin-bottom: 2px;
+  background: rgba(0,200,120,0.04); border-radius: 5px;
+  font-size: 13px; font-weight: 600; color: #00dd99;
+}
+.tempo-hist-row .num { font-size:9px; color:#00aa66; width:14px; }
+.tempo-hist-row .unit { font-size:8px; color:#00aa66; margin-left:2px; }
+
+/* ---- TRAINING タブ ---- */
+.training-panel { width: 100%; }
+.train-group {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.train-label { font-size: 10px; letter-spacing: 3px; color: #334; }
+.train-input {
+  background: rgba(0,20,40,0.8); border: 1px solid #1a3a55;
+  color: #00bfff; font-size: 18px; font-weight: 700;
+  text-align: center; border-radius: 6px; padding: 4px;
+  width: 50px;
+}
+
+/* ========== BUTTONS（固定） ========== */
 .buttons {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: clamp(10px, 4vw, 20px);
-  margin-bottom: 24px;
+  padding: 10px 16px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  flex-shrink: 0;
 }
 .btn {
-  border: none;
-  cursor: pointer;
-  font-family: 'Russo One', sans-serif;
-  font-weight: 400;
-  letter-spacing: 1px;
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  touch-action: none; -webkit-user-select: none; user-select: none;
+  border: none; cursor: pointer;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 1px; border-radius: 50%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  touch-action: none; -webkit-user-select: none;
   transition: transform 0.1s;
-}
-.btn:active { transform: scale(0.9); }
-.btn-sm {
   width: clamp(60px, 17vw, 72px);
   height: clamp(60px, 17vw, 72px);
-  font-size: 8px;
-  gap: 3px;
+  gap: 2px;
+  flex-shrink: 0;
 }
-.btn-lg {
-  width: clamp(60px, 17vw, 76px);
-  height: clamp(60px, 17vw, 76px);
-  font-size: 9px;
-}
-.icon { font-size: clamp(12px, 3.5vw, 16px); line-height: 1; }
+.btn:active { transform: scale(0.9); }
+.btn-icon { font-size: clamp(14px, 4vw, 18px); line-height: 1; }
+.btn-hint { font-size: 7px; letter-spacing: 1px; opacity: 0.4; margin-top: 1px; }
 
 #startBtn {
   background: radial-gradient(circle at 40% 35%, #eecc00, #aa8800);
-  color: #000;
-  box-shadow: 0 4px 24px rgba(255,200,0,0.55), inset 0 1px 0 rgba(255,255,255,0.25);
-  border: 2px solid #cc9900;
-}
-#startBtn.running {
-  background: radial-gradient(circle at 40% 35%, #ff5544, #aa2200);
-  box-shadow: 0 4px 24px rgba(255,80,40,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
-  border-color: #cc3300;
-  color: #fff;
-}
-/* Long-press reset ring */
-#startBtn {
-  position: relative;
-}
-#startRing {
-  position: absolute;
-  inset: -6px;
-  width: calc(100% + 12px);
-  height: calc(100% + 12px);
-  pointer-events: none;
-  transform: rotate(-90deg);
-}
-#startRingCircle {
-  fill: none;
-  stroke: #ff4422;
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-dasharray: 0 1000;
-  filter: drop-shadow(0 0 4px #ff4422);
-  transition: stroke-dasharray 1s linear;
-}
-#startBtn.long-press #startRingCircle {
-  stroke-dasharray: 1000 0;
+  color: #000; border: 2px solid #cc9900;
+  box-shadow: 0 4px 24px rgba(255,200,0,0.55);
 }
 #lapBtn {
   background: radial-gradient(circle at 40% 35%, #225588, #0d1e33);
-  color: #00bfff;
-  box-shadow: 0 4px 14px rgba(0,100,180,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
-  border: 2px solid #1a3a55;
+  color: #00bfff; border: 2px solid #1a3a55;
+  box-shadow: 0 4px 14px rgba(0,100,180,0.4);
 }
 #tempoBtn {
   background: radial-gradient(circle at 40% 35%, #0d3322, #050f0a);
-  color: #00dd99;
-  box-shadow: 0 4px 14px rgba(0,150,80,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
-  border: 2px solid #0a3322;
+  color: #00dd99; border: 2px solid #0a3322;
+  box-shadow: 0 4px 14px rgba(0,150,80,0.3);
 }
 #tempoBtn.measuring {
-  background: radial-gradient(circle at 40% 35%, #0d4428, #051209);
   border-color: #00dd99;
-  box-shadow: 0 4px 20px rgba(0,200,120,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
-  color: #00ffbb;
+  box-shadow: 0 4px 20px rgba(0,200,120,0.5);
 }
 
-/* Lap list */
-.lap-section { width: 100%; max-width: 360px; }
-.lap-section-header {
+/* ========== TAB BAR（固定） ========== */
+.tab-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #111a22;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-bottom: env(safe-area-inset-bottom); /* ホームバー対応 */
+  flex-shrink: 0;
 }
-.lap-section-title {
-  font-family: 'Russo One', sans-serif;
-  font-size: 11px;
-  color: #334;
-  letter-spacing: 3px;
+.tab-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 8px 4px;
+  background: none; border: none; cursor: pointer;
+  font-size: 8px; letter-spacing: 2px;
+  color: #223; gap: 3px;
+  transition: color 0.15s;
 }
-.csv-btn {
-  font-family: 'Teko', sans-serif;
-  font-size: 13px;
-  letter-spacing: 1px;
-  background: none;
-  border: 1px solid #1a3a55;
-  color: #00bfff;
-  border-radius: 6px;
-  padding: 3px 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.csv-btn:disabled { color: #223; border-color: #111820; cursor: default; }
-.csv-btn:not(:disabled):hover { background: rgba(0,191,255,0.08); }
-.csv-btn:not(:disabled):active { transform: scale(0.95); }
-.lap-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 260px;
-  overflow-y: auto;
-}
-.lap-list::-webkit-scrollbar { width: 3px; }
-.lap-list::-webkit-scrollbar-thumb { background: #1a2a3a; border-radius: 2px; }
-
-.lap-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(0,16,32,0.7);
-  border: 1px solid #0a1a24;
-  border-radius: 8px;
-  padding: 9px 14px;
-  animation: lapIn 0.2s ease;
-}
-.lap-item.best  { border-color: #00aa4440; background: rgba(0,35,18,0.6); }
-.lap-item.worst { border-color: #aa330040; background: rgba(35,8,0,0.6); }
-
-@keyframes lapIn {
-  from { opacity:0; transform:translateY(-6px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-
-.lap-num  { font-family:'Russo One', sans-serif; font-size:11px; color:#334; min-width:36px; }
-.lap-times { display:flex; flex-direction:column; gap:2px; flex:1; padding: 0 8px; }
-.lap-time-row { display:flex; align-items:center; gap:6px; }
-.lap-time-lbl { font-family:'Teko', sans-serif; font-size:10px; color:#445; letter-spacing:2px; min-width:32px; }
-.lap-time { font-family:'Rajdhani', sans-serif; font-weight:700; font-size:16px; color:#00bfff; text-shadow:0 0 8px rgba(0,191,255,0.4); display:flex; align-items:center; }
-.lap-time .d { display:inline-block; width:0.6em; text-align:center; }
-.lap-time .sep { display:inline-block; width:0.25em; text-align:center; }
-.lap-time .d.ghost, .lap-time .sep.ghost { color:rgba(0,191,255,0.15); text-shadow:none; }
-.lap-badge { font-size:9px; padding:2px 7px; border-radius:4px; font-family:'Teko', sans-serif; letter-spacing:2px; min-width:36px; text-align:center; }
-.badge-best  { color:#00dd77; background:rgba(0,160,70,0.15); }
-.badge-worst { color:#ff6644; background:rgba(180,50,0,0.15); }
-.no-laps { text-align:center; color:#1a2030; font-size:11px; padding:20px; letter-spacing:2px; }
+.tab-item .tab-icon { font-size: 18px; }
+.tab-item.active { color: #00bfff; }
+.tab-item.active .tab-icon { text-shadow: 0 0 10px rgba(0,150,255,0.6); }
 </style>
 </head>
 <body>
 <div class="app">
 
+  <!-- HEADER -->
   <div class="header">
     <div class="header-title">TACTICAL STOPWATCH</div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div class="interval-bar" id="intervalBar">
-        <button class="ivl-btn" data-ivl="3">3s</button>
-        <button class="ivl-btn" data-ivl="5">5s</button>
-        <button class="ivl-btn active" data-ivl="10">10s</button>
-        <button class="ivl-btn" data-ivl="20">20s</button>
-        <button class="ivl-btn" data-ivl="30">30s</button>
+    <div class="header-right">
+      <div class="interval-bar">
+        <button class="ivl-btn">3s</button>
+        <button class="ivl-btn">5s</button>
+        <button class="ivl-btn active">10s</button>
+        <button class="ivl-btn">20s</button>
+        <button class="ivl-btn">30s</button>
       </div>
-      <button id="soundBtn">🔊</button>
+      <button class="sound-btn">🔊</button>
     </div>
   </div>
 
-  <!-- Training settings -->
-  <div class="training-bar" id="trainingBar">
-    <div class="training-group">
-      <div class="training-lbl">CIRCLE</div>
-      <div class="training-input-row">
-        <input class="training-input" id="circleMin" type="number" min="0" max="99" value="1" style="width:32px;">
-        <span class="training-input-sep">:</span>
-        <input class="training-input" id="circleSec" type="number" min="0" max="59" value="30" style="width:32px;">
-      </div>
-    </div>
-    <div class="training-group">
-      <div class="training-lbl">本数</div>
-      <div class="training-input-row">
-        <input class="training-input" id="setCount" type="number" min="1" max="30" value="10" style="width:40px;" oninput="onSetCountChange()">
-      </div>
-    </div>
+  <!-- MAIN: タブで切り替え -->
+  <div class="main">
 
-  </div>
-
-  <div class="clock-wrap">
-    <canvas id="clockCanvas" width="300" height="300"></canvas>
-    <div class="center-display">
-      <div id="setsLbl" style="font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:#ffcc00;letter-spacing:3px;min-height:32px;line-height:1;text-shadow:0 0 12px #ffaa0088;"></div>
-      <div class="lbl">ELAPSED TIME</div>
-      <div id="mainTime"></div>
-      <div class="divider"></div>
-      <div class="frozen-divider" id="frozenDivider"></div>
-      <div class="frozen-lap-wrap" id="frozenLapWrap">
-        <div class="frozen-lap-row">
-          <span class="frozen-lap-lbl">SPLIT</span>
-          <span class="frozen-lap-time" id="frozenSplit"></span>
-        </div>
-        <div class="frozen-lap-row">
-          <span class="frozen-lap-lbl">LAP</span>
-          <span class="frozen-lap-time" id="frozenLap"></span>
+    <!-- TAB 1: STOPWATCH -->
+    <div class="tab-panel active" id="panel-watch">
+      <div class="clock-wrap">
+        <canvas width="300" height="300"></canvas>
+        <div class="center-display">
+          <div class="sets-lbl">3 / 10</div>
+          <div style="font-size:9px;letter-spacing:2px;color:#334;margin-bottom:2px;">ELAPSED TIME</div>
+          <div class="main-time">01:23.45</div>
+          <div style="height:1px;width:60%;background:rgba(255,255,255,0.08);margin:6px 0;"></div>
+          <div style="font-size:9px;color:#334;letter-spacing:1px;">SPLIT 00:23.45</div>
+          <div style="font-size:9px;color:#334;letter-spacing:1px;">LAP  00:18.22</div>
         </div>
       </div>
+      <!-- LAP LIST コンパクト表示 -->
+      <div class="lap-list-inline">
+        <div class="lap-row"><span class="lap-num">1</span><span class="lap-time">00:18.22</span><span class="lap-split">00:18.22</span></div>
+        <div class="lap-row"><span class="lap-num">2</span><span class="lap-time">00:20.11</span><span class="lap-split">00:38.33</span></div>
+        <div class="lap-row"><span class="lap-num">3</span><span class="lap-time">00:23.45</span><span class="lap-split">01:01.78</span></div>
+      </div>
     </div>
+
+    <!-- TAB 2: TEMPO -->
+    <div class="tab-panel" id="panel-tempo">
+      <div class="tempo-panel">
+        <div class="tempo-main">
+          <div class="tempo-val">
+            <div class="label">RPM</div>
+            <div class="value">36.50</div>
+            <div class="unit">rev / min</div>
+          </div>
+          <div class="tempo-sep"></div>
+          <div class="tempo-val">
+            <div class="label">SEC / REV</div>
+            <div class="value">1.64</div>
+            <div class="unit">sec / rev</div>
+          </div>
+        </div>
+        <div class="tempo-status">TAP TEMPO TO REMEASURE</div>
+        <div class="tempo-history">
+          <div class="tempo-history-title">HISTORY</div>
+          <div class="tempo-hist-row"><span class="num">1</span><span>36.50 <span class="unit">RPM</span></span><span>1.64 <span class="unit">sec/rev</span></span></div>
+          <div class="tempo-hist-row"><span class="num">2</span><span>35.80 <span class="unit">RPM</span></span><span>1.68 <span class="unit">sec/rev</span></span></div>
+          <div class="tempo-hist-row"><span class="num">3</span><span>34.20 <span class="unit">RPM</span></span><span>1.75 <span class="unit">sec/rev</span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: TRAINING SETTINGS -->
+    <div class="tab-panel" id="panel-train">
+      <div class="training-panel">
+        <div class="train-group">
+          <span class="train-label">CIRCLE TIME</span>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <input class="train-input" type="number" value="1">
+            <span style="color:#334;">:</span>
+            <input class="train-input" type="number" value="30">
+          </div>
+        </div>
+        <div class="train-group">
+          <span class="train-label">本数</span>
+          <input class="train-input" type="number" value="10">
+        </div>
+      </div>
+    </div>
+
   </div>
 
+  <!-- BUTTONS (固定・スクロールしない) -->
   <div class="buttons">
-    <button class="btn btn-lg" id="startBtn">
-      <svg id="startRing" viewBox="0 0 110 110"><circle id="startRingCircle" cx="55" cy="55" r="52"/></svg>
-      <span id="startIcon" class="icon">▶</span>
-      <span id="startLabel">START</span>
-      <span id="resetHint" style="font-size:7px;letter-spacing:1px;color:rgba(0,0,0,0.4);margin-top:1px;">HOLD 0.5s</span>
+    <button class="btn" id="startBtn">
+      <span class="btn-icon">▶</span>
+      <span>START</span>
+      <span class="btn-hint">HOLD 0.5s</span>
     </button>
-    <button class="btn btn-lg" id="lapBtn">
-      <span class="icon">⊞</span>
+    <button class="btn" id="lapBtn">
+      <span class="btn-icon">⊞</span>
       <span>LAP</span>
-      <span style="font-size:7px;letter-spacing:1px;color:rgba(255,200,0,0.4);margin-top:1px;">RESET(1s)</span>
+      <span class="btn-hint">RESET(1s)</span>
     </button>
-    <button class="btn btn-lg" id="tempoBtn">
-      <span id="tempoIcon" class="icon">↻</span>
-      <span id="tempoLabel">TEMPO</span>
-      <span style="font-size:7px;letter-spacing:1px;color:rgba(0,220,150,0.5);margin-top:1px;">1 CYCLE</span>
+    <button class="btn" id="tempoBtn">
+      <span class="btn-icon">↻</span>
+      <span>TEMPO</span>
+      <span class="btn-hint">1 CYCLE</span>
     </button>
   </div>
 
-  <!-- Tempo display -->
-  <div id="tempoDisplay" style="display:none;width:100%;max-width:360px;margin-bottom:10px;padding:8px 12px;background:rgba(0,30,20,0.7);border:1px solid rgba(0,200,120,0.2);border-radius:10px;">
-    <div style="display:flex;justify-content:space-around;align-items:center;">
-      <div style="text-align:center;">
-        <div style="font-family:'Teko',sans-serif;font-size:9px;letter-spacing:2px;color:#00aa6688;margin-bottom:1px;">RPM</div>
-        <div id="tempoBpm" style="font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#00dd99;text-shadow:0 0 12px rgba(0,200,140,0.7);line-height:1;">—</div>
-        <div style="font-family:'Teko',sans-serif;font-size:8px;letter-spacing:1px;color:#00aa6655;">rev / min</div>
-      </div>
-      <div style="width:1px;height:36px;background:rgba(0,200,120,0.15);"></div>
-      <div style="text-align:center;">
-        <div style="font-family:'Teko',sans-serif;font-size:9px;letter-spacing:2px;color:#00aa6688;margin-bottom:1px;">SEC / REV</div>
-        <div id="tempoSec" style="font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#00dd99;text-shadow:0 0 12px rgba(0,200,140,0.7);line-height:1;">—</div>
-        <div style="font-family:'Teko',sans-serif;font-size:8px;letter-spacing:1px;color:#00aa6655;">sec / rev</div>
-      </div>
-    </div>
-    <div id="tempoStatus" style="text-align:center;margin-top:5px;font-family:'Teko',sans-serif;font-size:9px;letter-spacing:2px;color:#00aa66;"></div>
-    <div id="tempoHistory" style="display:none;margin-top:7px;border-top:1px solid rgba(0,200,120,0.1);padding-top:6px;">
-      <div style="font-family:'Teko',sans-serif;font-size:8px;letter-spacing:3px;color:#00aa6655;margin-bottom:4px;text-align:center;">HISTORY</div>
-      <div id="tempoHistoryList"></div>
-    </div>
-  </div>
-
-  <div class="lap-section">
-    <div class="lap-section-header">
-      <div class="lap-section-title">LAP TIMES</div>
-      <button id="csvBtn" class="csv-btn" disabled>⬇ CSV保存</button>
-    </div>
-    <div class="lap-list" id="lapList">
-      <div class="no-laps">— ラップなし —</div>
-    </div>
+  <!-- TAB BAR (固定) -->
+  <div class="tab-bar">
+    <button class="tab-item active" onclick="switchTab('watch',this)">
+      <span class="tab-icon">⏱</span>
+      <span>WATCH</span>
+    </button>
+    <button class="tab-item" onclick="switchTab('tempo',this)">
+      <span class="tab-icon">↻</span>
+      <span>TEMPO</span>
+    </button>
+    <button class="tab-item" onclick="switchTab('train',this)">
+      <span class="tab-icon">⚙</span>
+      <span>SETTINGS</span>
+    </button>
   </div>
 
 </div>
-
 <script>
-(function() {
-  var canvas = document.getElementById('clockCanvas');
-  var ctx = canvas.getContext('2d');
-  var CX = 150, CY = 150;
-
-  var running = false;
-  var elapsed = 0;
-  var lastTs = null;
-  var laps = [];
-  var lapStart = 0;
-  var maxLaps = 10;
-  var rafId = null;
-  var soundOn = true;
-  var beepInterval = 10; // seconds
-
-  // Training
-  var circleMs = 90000; // 1:30 default
-  var totalSets = 10;
-  var currentSet = 0;
-  var circleActive = false;
-  var nextCircleAt = 0;
-  var audioCtx = null;
-
-  // --- Audio ---
-  var soundA = null; // replaced by Web Audio
-  var soundB = null; // replaced by Web Audio
-
-  // ==============================================
-  // SOUND ENGINE — 全音をWeb Audio APIで自作
-  // ==============================================
-  function getCtx() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    return audioCtx;
-  }
-
-  // 基本オシレーター＋エンベロープ
-  function tone(freq, type, startTime, dur, vol, attack, decay) {
-    var ctx2 = getCtx();
-    var o = ctx2.createOscillator();
-    var g = ctx2.createGain();
-    o.connect(g); g.connect(ctx2.destination);
-    o.type = type || 'sine';
-    o.frequency.setValueAtTime(freq, startTime);
-    attack = attack || 0.004;
-    decay  = decay  || dur;
-    g.gain.setValueAtTime(0, startTime);
-    g.gain.linearRampToValueAtTime(vol, startTime + attack);
-    g.gain.exponentialRampToValueAtTime(0.0001, startTime + attack + decay);
-    o.start(startTime);
-    o.stop(startTime + attack + decay + 0.01);
-  }
-
-  // クリック／打撃音（ノイズバースト）
-  function click(startTime, vol, pitch) {
-    var ctx2 = getCtx();
-    // ノイズ
-    var buf = ctx2.createBuffer(1, ctx2.sampleRate * 0.04, ctx2.sampleRate);
-    var data = buf.getChannelData(0);
-    for (var i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
-    var src = ctx2.createBufferSource();
-    src.buffer = buf;
-    // バンドパスフィルター（クリック感）
-    var bp = ctx2.createBiquadFilter();
-    bp.type = 'bandpass';
-    bp.frequency.value = pitch || 2200;
-    bp.Q.value = 1.2;
-    var g = ctx2.createGain();
-    src.connect(bp); bp.connect(g); g.connect(ctx2.destination);
-    g.gain.setValueAtTime(vol || 0.6, startTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.035);
-    src.start(startTime);
-    src.stop(startTime + 0.04);
-  }
-
-  // ====== スタート音: 短くシャープ「ピッ」======
-  function soundStart() {
-    if (!soundOn) return;
-    var ctx2 = getCtx();
-    var t = ctx2.currentTime;
-    // 1200Hzの正弦波、極めて短い
-    tone(1320, 'sine', t,       0.055, 0.38, 0.003, 0.052);
-    // ほんの少し高い倍音でシャープ感
-    tone(2640, 'sine', t,       0.025, 0.12, 0.002, 0.025);
-  }
-
-  // ====== ストップ音: 少し低め「ポッ」======
-  function soundStop() {
-    if (!soundOn) return;
-    var ctx2 = getCtx();
-    var t = ctx2.currentTime;
-    tone(880,  'sine', t,       0.07,  0.28, 0.004, 0.065);
-    tone(660,  'sine', t+0.01,  0.045, 0.15, 0.003, 0.040);
-  }
-
-  // ====== リセット音: 下降「ポポッ」======
-  function soundReset() {
-    if (!soundOn) return;
-    var ctx2 = getCtx();
-    var t = ctx2.currentTime;
-    tone(660, 'sine', t,       0.06, 0.22, 0.004, 0.055);
-    tone(440, 'sine', t+0.07,  0.06, 0.18, 0.004, 0.055);
-  }
-
-  // ====== LAP音: 2音「ピポ」======
-  function soundLap() {
-    if (!soundOn) return;
-    var ctx2 = getCtx();
-    var t = ctx2.currentTime;
-    tone(1100, 'sine', t,      0.05, 0.30, 0.003, 0.045);
-    tone(1480, 'sine', t+0.06, 0.05, 0.22, 0.003, 0.045);
-  }
-
-  // ====== サークル完了音: 明るい上昇「ピピピ↑」======
-  function playA() {
-    if (!soundOn) return;
-    var ctx2 = getCtx();
-    var t = ctx2.currentTime;
-    // 3音上昇: ド・ミ・ソ（明るいメジャーコード感）
-    tone(1047, 'sine', t,       0.08, 0.30, 0.004, 0.075); // C6
-    tone(1319, 'sine', t+0.09,  0.08, 0.30, 0.004, 0.075); // E6
-    tone(1568, 'sine', t+0.18,  0.09, 0.40, 0.004, 0.095); // G6
-    // 最後に少し輝き感
-    tone(2093, 'sine', t+0.20,  0.04, 0.20, 0.003, 0.060); // C7（軽く重ねる）
-  }
-
-  // ====== カウントダウン音: 実音分析ベース ======
-  // 音A分析: 440Hz主音 + 1320Hz倍音、120ms
-  // 音B分析: 880Hz主音 + 2640Hz倍音、フラット持続→緩やか減衰
-  function playB(isZero) {
-    if (!soundOn) return;
-    var ctx2 = getCtx();
-    var t = ctx2.currentTime;
-    if (isZero) {
-      // 10秒: 音B再現 — 880Hz主音 + 2640Hz倍音
-      // フラットに鳴り続けて最後に減衰（音B の特性）
-      var dur = 1.2; // 実用的な長さ（2.9秒は長すぎるので1.2秒に）
-      var flatTime = 0.9; // フラット区間
-      var decayTime = 0.3; // 減衰区間
-      var c2 = ctx2;
-      // 主音 880Hz
-      var o1 = c2.createOscillator();
-      var g1 = c2.createGain();
-      o1.connect(g1); g1.connect(c2.destination);
-      o1.type = 'sine'; o1.frequency.value = 880;
-      g1.gain.setValueAtTime(0, t);
-      g1.gain.linearRampToValueAtTime(0.42, t + 0.01);
-      g1.gain.setValueAtTime(0.42, t + flatTime);
-      g1.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      o1.start(t); o1.stop(t + dur + 0.02);
-      // 倍音 2640Hz（3倍音、実測値）
-      var o2 = c2.createOscillator();
-      var g2 = c2.createGain();
-      o2.connect(g2); g2.connect(c2.destination);
-      o2.type = 'sine'; o2.frequency.value = 2640;
-      g2.gain.setValueAtTime(0, t);
-      g2.gain.linearRampToValueAtTime(0.10, t + 0.01);
-      g2.gain.setValueAtTime(0.10, t + flatTime);
-      g2.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      o2.start(t); o2.stop(t + dur + 0.02);
-      // 5倍音 4400Hz（実測値）
-      var o3 = c2.createOscillator();
-      var g3 = c2.createGain();
-      o3.connect(g3); g3.connect(c2.destination);
-      o3.type = 'sine'; o3.frequency.value = 4400;
-      g3.gain.setValueAtTime(0, t);
-      g3.gain.linearRampToValueAtTime(0.03, t + 0.01);
-      g3.gain.setValueAtTime(0.03, t + flatTime);
-      g3.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      o3.start(t); o3.stop(t + dur + 0.02);
-    } else {
-      // 8・9秒: 音A再現 — 440Hz主音 + 1320Hz倍音、120ms
-      var c2 = ctx2;
-      // 主音 440Hz
-      var o1 = c2.createOscillator();
-      var g1 = c2.createGain();
-      o1.connect(g1); g1.connect(c2.destination);
-      o1.type = 'sine'; o1.frequency.value = 440;
-      g1.gain.setValueAtTime(0, t);
-      g1.gain.linearRampToValueAtTime(0.38, t + 0.004);
-      g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
-      o1.start(t); o1.stop(t + 0.14);
-      // 倍音 1320Hz
-      var o2 = c2.createOscillator();
-      var g2 = c2.createGain();
-      o2.connect(g2); g2.connect(c2.destination);
-      o2.type = 'sine'; o2.frequency.value = 1320;
-      g2.gain.setValueAtTime(0, t);
-      g2.gain.linearRampToValueAtTime(0.12, t + 0.003);
-      g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
-      o2.start(t); o2.stop(t + 0.12);
-    }
-  }
-
-  // ====== 汎用ビープ（beep関数は内部互換用）======
-  function beep(freq, dur, vol) {
-    if (!soundOn) return;
-    tone(freq, 'sine', getCtx().currentTime, dur, vol || 0.3, 0.004, dur * 0.8);
-  }
-
-  // --- Time format ---
-  function pad2(n) { return n < 10 ? '0' + n : '' + n; }
-
-  function d(c, dim) {
-    return '<span class="d' + (dim ? ' ghost' : '') + '">' + c + '</span>';
-  }
-  function sep(c, dim) {
-    return '<span class="sep' + (dim ? ' ghost' : '') + '">' + c + '</span>';
-  }
-
-  function fmtGhost(ms) {
-    var t = Math.floor(ms);
-    var m = Math.floor(t / 60000);
-    var s = Math.floor((t % 60000) / 1000);
-    var tenth = Math.floor((t % 1000) / 100);
-    var m1 = Math.floor(m / 10), m2 = m % 10;
-    var s1 = Math.floor(s / 10), s2 = s % 10;
-    return d(m1, m < 10) + d(m2, m === 0)
-         + sep(':', m === 0 && s === 0)
-         + d(s1, s < 10 && m === 0) + d(s2, s === 0 && m === 0)
-         + sep('.', tenth === 0 && s === 0 && m === 0)
-         + d(tenth, tenth === 0 && s === 0 && m === 0);
-  }
-
-  function fmtLapGhost(ms) {
-    var t = Math.floor(ms);
-    var m = Math.floor(t / 60000);
-    var s = Math.floor((t % 60000) / 1000);
-    var cs = Math.floor((t % 1000) / 10);
-    var m1 = Math.floor(m / 10), m2 = m % 10;
-    var s1 = Math.floor(s / 10), s2 = s % 10;
-    var c1 = Math.floor(cs / 10), c2 = cs % 10;
-    return d(m1, m < 10) + d(m2, m === 0)
-         + sep(':', m === 0 && s === 0)
-         + d(s1, s < 10 && m === 0) + d(s2, s === 0 && m === 0)
-         + sep('.', cs === 0 && s === 0 && m === 0)
-         + d(c1, c1 === 0 && m === 0 && s === 0) + d(c2, cs === 0 && s === 0 && m === 0);
-  }
-
-  // --- Draw clock ---
-  function drawClock(ms) {
-    ctx.clearRect(0, 0, 300, 300);
-    var sec = (ms / 1000) % 60;
-    var min = Math.floor(ms / 60000) % 60;
-
-    function drawRing(R, bgLw, bgColor, tickMaj, tickMin, arcColor, arcLw, dotR, dotColor, val, total, showLabels, dotBloom) {
-      dotBloom = dotBloom || 16;
-      ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI * 2);
-      ctx.strokeStyle = bgColor; ctx.lineWidth = bgLw; ctx.stroke();
-
-      for (var i = 0; i < 60; i++) {
-        var a = (i / 60) * Math.PI * 2 - Math.PI / 2;
-        var major = (i % 5 === 0);
-        var len = major ? 13 : 6;
-        var r1 = R - 2, r2 = r1 - len;
-        ctx.beginPath();
-        ctx.moveTo(CX + Math.cos(a) * r1, CY + Math.sin(a) * r1);
-        ctx.lineTo(CX + Math.cos(a) * r2, CY + Math.sin(a) * r2);
-        ctx.strokeStyle = major ? tickMaj : tickMin;
-        ctx.lineWidth = major ? 2 : 1;
-        ctx.stroke();
-        if (major && showLabels) {
-          var n = (i === 0) ? 60 : i;
-          var lr = r2 - 11;
-          ctx.fillStyle = tickMaj + '88';
-          ctx.font = "bold 8px 'Share Tech Mono',monospace";
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText(n, CX + Math.cos(a) * lr, CY + Math.sin(a) * lr);
-        }
-      }
-
-      var angle = (val / total) * Math.PI * 2 - Math.PI / 2;
-      ctx.beginPath(); ctx.arc(CX, CY, R, -Math.PI / 2, angle);
-      ctx.strokeStyle = arcColor; ctx.lineWidth = arcLw; ctx.lineCap = 'round';
-      ctx.shadowColor = arcColor; ctx.shadowBlur = 12;
-      ctx.stroke(); ctx.shadowBlur = 0;
-
-      ctx.beginPath();
-      ctx.arc(CX + Math.cos(angle) * R, CY + Math.sin(angle) * R, dotR, 0, Math.PI * 2);
-      ctx.fillStyle = dotColor; ctx.shadowColor = dotColor; ctx.shadowBlur = dotBloom;
-      ctx.fill(); ctx.shadowBlur = 0;
-    }
-
-    var dotBoost = countFlashProgress > 0 ? (1 + countFlashProgress * 3) : 1;
-    var dotBloom = countFlashProgress > 0 ? (16 + countFlashProgress * 60) : 16;
-    var dotR6 = Math.round(6 * dotBoost);
-    var flashBaseCol = countFlashColor === 'red' ? '#ff4422' : countFlashColor === 'yellow' ? '#ffee22' : '#44eeff';
-    var dotCol = countFlashProgress > 0
-      ? lerpColor(flashBaseCol, '#ffffff', countFlashProgress)
-      : '#44eeff';
-    drawRing(140, 10, '#0c1318', '#007aaa', '#002233', '#00bfff', 5, dotR6, dotCol, sec, 60, true, dotBloom);
-    // Yellow ring: bg only, no ticks (replaced by training segments below)
-    ctx.beginPath(); ctx.arc(CX, CY, 108, 0, Math.PI * 2);
-    ctx.strokeStyle = '#0c1008'; ctx.lineWidth = 8; ctx.stroke();
-    // Yellow progress arc (standard minute arc when not in training mode)
-    if (totalSets <= 1) {
-      var yAngle = (min / 60) * Math.PI * 2 - Math.PI / 2;
-      ctx.beginPath(); ctx.arc(CX, CY, 108, -Math.PI / 2, yAngle);
-      ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-      ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 12; ctx.stroke(); ctx.shadowBlur = 0;
-      // dot
-      ctx.beginPath();
-      ctx.arc(CX + Math.cos(yAngle) * 108, CY + Math.sin(yAngle) * 108, 5, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffcc00'; ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 16;
-      ctx.fill(); ctx.shadowBlur = 0;
-    }
-
-    // Training: yellow ring split — blocks start LIT, fade out one by one
-    if (totalSets > 1) {
-      var R2 = 108;
-      var slitAngle = 0.025;
-      var segFull = Math.PI * 2 / totalSets;
-      var segDraw = segFull - slitAngle;
-
-      for (var si = 0; si < totalSets; si++) {
-        var segCenter = si * segFull - Math.PI / 2 + segFull / 2;
-        var sA = segCenter - segDraw / 2;
-        var eA = segCenter + segDraw / 2;
-
-        if (si < currentSet) {
-          // Already consumed: dark (gone)
-          ctx.beginPath(); ctx.arc(CX, CY, R2, sA, eA);
-          ctx.strokeStyle = 'rgba(80,40,0,0.15)';
-          ctx.lineWidth = 8; ctx.lineCap = 'butt'; ctx.stroke();
-        } else if (si === currentSet && circleActive && circleMs > 0) {
-          // Currently burning: starts full yellow, fades as time progresses
-          var msInSeg = ms - (nextCircleAt - circleMs);
-          var burnProg = Math.min(1, Math.max(0, msInSeg / circleMs));
-          // Remaining bright portion (right side of segment)
-          var burnedEnd = sA + segDraw * burnProg;
-          // Burned part: dark
-          if (burnProg > 0) {
-            ctx.beginPath(); ctx.arc(CX, CY, R2, sA, burnedEnd);
-            ctx.strokeStyle = 'rgba(80,40,0,0.15)';
-            ctx.lineWidth = 8; ctx.lineCap = 'butt'; ctx.stroke();
-          }
-          // Remaining part: bright yellow
-          if (burnProg < 1) {
-            ctx.beginPath(); ctx.arc(CX, CY, R2, burnedEnd, eA);
-            ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 8; ctx.lineCap = 'butt';
-            ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
-          }
-        } else {
-          // Future: full bright yellow
-          ctx.beginPath(); ctx.arc(CX, CY, R2, sA, eA);
-          ctx.strokeStyle = '#ffaa00'; ctx.lineWidth = 8; ctx.lineCap = 'butt';
-          ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 4; ctx.stroke(); ctx.shadowBlur = 0;
-        }
-      }
-
-      // Slit dividers on top
-      ctx.shadowBlur = 0;
-      for (var si2 = 0; si2 < totalSets; si2++) {
-        var slitA = si2 * segFull - Math.PI / 2;
-        ctx.beginPath();
-        ctx.moveTo(CX + Math.cos(slitA) * 103, CY + Math.sin(slitA) * 103);
-        ctx.lineTo(CX + Math.cos(slitA) * 113, CY + Math.sin(slitA) * 113);
-        ctx.strokeStyle = '#040810';
-        ctx.lineWidth = 2.5; ctx.lineCap = 'butt'; ctx.stroke();
-      }
-    }
-
-    ctx.beginPath(); ctx.arc(CX, CY, 88, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(4,8,14,0.88)'; ctx.fill();
-    ctx.strokeStyle = '#0a1820'; ctx.lineWidth = 2; ctx.stroke();
-
-    var g = ctx.createRadialGradient(CX, CY, 0, CX, CY, 88);
-    g.addColorStop(0, 'rgba(0,50,90,0.2)');
-    g.addColorStop(1, 'transparent');
-    ctx.beginPath(); ctx.arc(CX, CY, 88, 0, Math.PI * 2);
-    ctx.fillStyle = g; ctx.fill();
-  }
-
-  // --- Training circle ---
-  function onSetCountChange() {
-    totalSets = parseInt(document.getElementById('setCount').value) || 1;
-    var setsLbl = document.getElementById('setsLbl');
-    if (setsLbl) {
-      if (circleActive || currentSet > 0) {
-        var left2 = totalSets - currentSet;
-        setsLbl.textContent = left2 + ' / ' + totalSets;
-      } else {
-        setsLbl.textContent = '';
-      }
-    }
-    drawClock(elapsed);
-  }
-
-  function startTraining() {
-    var m = parseInt(document.getElementById('circleMin').value) || 0;
-    var s = parseInt(document.getElementById('circleSec').value) || 0;
-    circleMs = (m * 60 + s) * 1000;
-    totalSets = parseInt(document.getElementById('setCount').value) || 1;
-    currentSet = 0;
-    circleActive = circleMs > 0 && totalSets > 0;
-    nextCircleAt = circleMs;
-    var setsLbl = document.getElementById('setsLbl');
-    if (setsLbl) setsLbl.textContent = circleActive ? (totalSets + ' / ' + totalSets) : '';
-    updateTrainingStatus();
-  }
-  function stopTraining() {
-    circleActive = false;
-    currentSet = 0;
-    nextCircleAt = 0;
-    // trainingStatus removed
-    var setsLbl = document.getElementById('setsLbl');
-    if (setsLbl) setsLbl.textContent = '';
-  }
-  function updateTrainingStatus() {
-    var setsLbl = document.getElementById('setsLbl');
-    if (!circleActive && currentSet === 0) {
-      if (setsLbl) setsLbl.textContent = '';
-      return;
-    }
-    var left = totalSets - currentSet;
-    if (setsLbl) setsLbl.textContent = left + ' / ' + totalSets;
-  }
-  function checkCircle(ms) {
-    if (!circleActive || circleMs <= 0) return;
-    if (ms < nextCircleAt) return;
-    // 複数フレームで連続発火しないよう、nextCircleAtをms以上に進めてから処理
-    nextCircleAt += circleMs;
-    currentSet++;
-    updateTrainingStatus();
-    // Auto LAP
-    var lapTime = elapsed - lapStart;
-    laps.push(lapTime);
-    lapStart = elapsed;
-    var _splitMs = elapsed;
-    setTimeout(function() { speakSplit(_splitMs); }, 1000);
-    document.getElementById('frozenSplit').innerHTML = fmtLapGhost(elapsed);
-    document.getElementById('frozenLap').innerHTML = fmtLapGhost(lapTime);
-    document.getElementById('frozenLapWrap').classList.add('visible');
-    document.getElementById('frozenDivider').classList.add('visible');
-    renderLaps();
-    if (currentSet >= totalSets) {
-      circleActive = false;
-      playA();
-      // trainingStatus removed
-    } else {
-      soundLap();
-    }
-  }
-
-  // --- カウント音（10秒ごとに8,9,10でビープ）---
-  var lastCountSec = -1;
-  var countFlashProgress = 0;
-  var countFlashStart = -1;
-  var countFlashDur = 600; // ms
-  var countFlashColor = 'blue'; // red/yellow/blue
-
-  function lerpColor(a, b, t) {
-    var ah = a.replace('#',''), bh = b.replace('#','');
-    var ar = parseInt(ah.slice(0,2),16), ag = parseInt(ah.slice(2,4),16), ab = parseInt(ah.slice(4,6),16);
-    var br = parseInt(bh.slice(0,2),16), bg = parseInt(bh.slice(2,4),16), bb = parseInt(bh.slice(4,6),16);
-    var r = Math.round(ar + (br-ar)*t), g = Math.round(ag + (bg-ag)*t), b2 = Math.round(ab + (bb-ab)*t);
-    return '#' + r.toString(16).padStart(2,'0') + g.toString(16).padStart(2,'0') + b2.toString(16).padStart(2,'0');
-  }
-
-  function checkCountBeep(ms) {
-    var totalSec = Math.floor((ms + 300) / 1000); // 0.3秒早く判定
-    var ivl = beepInterval;
-    var secInIvl = totalSec % ivl;
-    if (secInIvl === lastCountSec) return;
-    lastCountSec = secInIvl;
-    var flash = false;
-    if (secInIvl === ivl - 2) { playB(false); flash = true; countFlashColor = 'red'; }
-    else if (secInIvl === ivl - 1) { playB(false); flash = true; countFlashColor = 'yellow'; }
-    else if (secInIvl === 0 && totalSec > 0) { playB(true); flash = true; countFlashColor = 'blue'; }
-    if (flash) {
-      var el = document.getElementById('mainTime');
-      el.classList.remove('count-flash-red','count-flash-yellow','count-flash-blue');
-      void el.offsetWidth; // reflow to restart animation
-      el.classList.add('count-flash-' + countFlashColor);
-      countFlashStart = performance.now();
-    }
-  }
-
-  // --- Loop ---
-  function loop(ts) {
-    if (lastTs === null) lastTs = ts;
-    elapsed += ts - lastTs;
-    lastTs = ts;
-    checkCountBeep(elapsed);
-    checkCircle(elapsed);
-    // Update flash progress for canvas dot (1→0 over duration)
-    if (countFlashStart >= 0) {
-      var fp = 1 - Math.min(1, (ts - countFlashStart) / countFlashDur);
-      // ease-out
-      countFlashProgress = fp * fp;
-      if (fp <= 0) { countFlashStart = -1; countFlashProgress = 0; }
-    }
-    document.getElementById('mainTime').innerHTML = fmtGhost(elapsed);
-    drawClock(elapsed);
-    rafId = requestAnimationFrame(loop);
-  }
-
-  // --- Controls ---
-  function toggleWatch() {
-    if (!running) {
-      running = true;
-      lastTs = null;
-      document.getElementById('startLabel').textContent = 'STOP';
-      document.getElementById('startIcon').textContent = '⏸';
-      document.getElementById('startBtn').classList.add('running');
-      document.getElementById('resetHint').style.color = 'rgba(255,255,255,0.4)';
-      if (elapsed === 0) startTraining();
-      soundStart();
-      rafId = requestAnimationFrame(loop);
-    } else {
-      running = false;
-      cancelAnimationFrame(rafId);
-      document.getElementById('startLabel').textContent = 'START';
-      document.getElementById('startIcon').textContent = '▶';
-      document.getElementById('startBtn').classList.remove('running');
-      document.getElementById('resetHint').style.color = 'rgba(0,0,0,0.4)';
-      soundStop();
-    }
-  }
-
-  function resetWatch() {
-    running = false;
-    cancelAnimationFrame(rafId);
-    elapsed = 0; lastTs = null; laps = []; lapStart = 0; lastCountSec = -1; countFlashStart = -1; countFlashProgress = 0;
-    stopTraining();
-    document.getElementById('startLabel').textContent = 'START';
-    document.getElementById('startIcon').textContent = '▶';
-    document.getElementById('startBtn').classList.remove('running');
-    document.getElementById('frozenLapWrap').classList.remove('visible');
-    document.getElementById('frozenDivider').classList.remove('visible');
-    document.getElementById('mainTime').innerHTML = fmtGhost(0);
-    renderLaps();
-    drawClock(0);
-    soundReset();
-  }
-
-  // --- Split time speech ---
-  var NUMS = ['zero','one','two','three','four','five','six','seven','eight','nine'];
-  var TEENS = ['ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
-  var TENS  = ['','','twenty','thirty','forty','fifty'];
-  function numToWords(n) {
-    if (n === 0) return 'zero';
-    if (n < 10)  return NUMS[n];
-    if (n < 20)  return TEENS[n - 10];
-    var t = Math.floor(n / 10), u = n % 10;
-    return TENS[t] + (u > 0 ? ' ' + NUMS[u] : '');
-  }
-  function speakSplit(ms) {
-    var secDigit = Math.floor(ms / 1000) % 10; // 秒の1の位
-    var csDigit  = Math.floor(ms / 100) % 10;  // センチ秒の十の位（表示の小数第1位）
-    var text = NUMS[secDigit] + ' point ' + NUMS[csDigit];
-    var utt = new SpeechSynthesisUtterance(text);
-    utt.lang = 'en-US';
-    utt.rate = 1.1;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(utt);
-  }
-
-  function recordLap() {
-    if (!running) return;
-    var lapTime = elapsed - lapStart;
-    laps.push(lapTime);
-    lapStart = elapsed;
-    var _splitMs = elapsed;
-    setTimeout(function() { speakSplit(_splitMs); }, 1000);
-
-    // 押した瞬間のスプリット/ラップを固定表示
-    document.getElementById('frozenSplit').innerHTML = fmtLapGhost(elapsed);
-    document.getElementById('frozenLap').innerHTML = fmtLapGhost(lapTime);
-    document.getElementById('frozenLapWrap').classList.add('visible');
-    document.getElementById('frozenDivider').classList.add('visible');
-
-    renderLaps();
-    soundLap();
-  }
-
-  function toggleSound() {
-    soundOn = !soundOn;
-    document.getElementById('soundBtn').textContent = soundOn ? '🔊' : '🔇';
-    if (soundOn) beep(440, 0.05, 0.2);
-  }
-
-  function renderLaps() {
-    var list = document.getElementById('lapList');
-    var csvBtn = document.getElementById('csvBtn');
-    if (!laps.length) {
-      list.innerHTML = '<div class="no-laps">— ラップなし —</div>';
-      csvBtn.disabled = true;
-      return;
-    }
-    csvBtn.disabled = false;
-    var mn = Math.min.apply(null, laps);
-    var mx = Math.max.apply(null, laps);
-    var html = '';
-    for (var i = laps.length - 1; i >= 0; i--) {
-    var split = 0;
-    for (var j = 0; j <= i; j++) split += laps[j];
-    var splitTime = split;
-    var t = laps[i];
-      var best  = laps.length > 1 && t === mn;
-      var worst = laps.length > 1 && t === mx;
-      var cls   = best ? 'lap-item best' : worst ? 'lap-item worst' : 'lap-item';
-      var badge = best  ? '<span class="lap-badge badge-best">BEST</span>'
-                : worst ? '<span class="lap-badge badge-worst">SLOW</span>'
-                :         '<span class="lap-badge"></span>';
-      html += '<div class="' + cls + '">'
-            + '<span class="lap-num">LAP ' + pad2(i + 1) + '</span>'
-            + '<div class="lap-times">'
-            + '<span class="lap-time-row"><span class="lap-time-lbl">SPLIT</span><span class="lap-time">' + fmtLapGhost(splitTime) + '</span></span>'
-            + '<span class="lap-time-row"><span class="lap-time-lbl">LAP</span><span class="lap-time">' + fmtLapGhost(t) + '</span></span>'
-            + '</div>'
-            + badge + '</div>';
-    }
-    list.innerHTML = html;
-  }
-
-  function exportCSV() {
-    if (!laps.length) return;
-    var rows = ['LAP,SPLIT,LAP TIME'];
-    var split = 0;
-    for (var i = 0; i < laps.length; i++) {
-      split += laps[i];
-      rows.push((i + 1) + ',' + fmtCSV(split) + ',' + fmtCSV(laps[i]));
-    }
-    var blob = new Blob([rows.join('\n')], { type: 'text/csv' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'lapdata.csv';
-    a.click();
-  }
-
-  function fmtCSV(ms) {
-    var t = Math.floor(ms);
-    var m = Math.floor(t / 60000);
-    var s = Math.floor((t % 60000) / 1000);
-    var cs = Math.floor((t % 1000) / 10);
-    return pad2(m) + ':' + pad2(s) + '.' + pad2(cs);
-  }
-
-  // --- Unlock HTML Audio on first user interaction (browser autoplay policy) ---
-  // AudioContext unlock on first tap (iOS requires user gesture)
-  document.addEventListener('touchstart', function() {
-    if (audioCtx) return;
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-  }, { once: true });
-
-  // --- Bind buttons ---
-  // ============================================================
-  // START: tap instantly starts → hold 0.5s locks (prevents accidental stop)
-  // STOP:  must hold 0.5s while running
-  // LAP:   tap = lap, hold 1s = reset
-  // Short tap on start/stop = no action (anti-misfire)
-  // ============================================================
-  var btnPressTimer = null;
-  var btnPressTriggered = false;
-  var btnStartedRunning = false; // was running when press began?
-
-  function onStartDown(e) {
-    e.preventDefault();
-    btnPressTriggered = false;
-    btnStartedRunning = running;
-    var btn = document.getElementById('startBtn');
-
-    if (!running) {
-      // START: fire immediately on press
-      toggleWatch();
-      btnPressTriggered = true;
-      // Then arm lock animation (0.5s) — just visual, already started
-      btn.classList.add('long-press');
-      btnPressTimer = setTimeout(function() {
-        btn.classList.remove('long-press');
-      }, 500);
-    } else {
-      // STOP: require 0.5s hold
-      btn.classList.add('long-press');
-      btnPressTimer = setTimeout(function() {
-        btnPressTriggered = true;
-        btn.classList.remove('long-press');
-        toggleWatch();
-      }, 500);
-    }
-  }
-
-  function onStartUp(e) {
-    e.preventDefault();
-    clearTimeout(btnPressTimer);
-    document.getElementById('startBtn').classList.remove('long-press');
-    // If was running and not triggered (short tap) → cancel (no action)
-  }
-
-  function onStartCancel(e) {
-    clearTimeout(btnPressTimer);
-    document.getElementById('startBtn').classList.remove('long-press');
-    // If start was fired but stop wasn't → stay running (correct)
-  }
-
-  var startBtn = document.getElementById('startBtn');
-  startBtn.addEventListener('pointerdown', onStartDown);
-  startBtn.addEventListener('pointerup', onStartUp);
-  startBtn.addEventListener('pointerleave', onStartCancel);
-  startBtn.addEventListener('pointercancel', onStartCancel);
-
-  // LAP: tap = lap, hold 1s = reset
-  var lapPressTimer = null;
-  var lapPressTriggered = false;
-
-  function onLapDown(e) {
-    e.preventDefault();
-    lapPressTriggered = false;
-    var lapBtn = document.getElementById('lapBtn');
-    lapBtn.classList.add('long-press');
-    lapPressTimer = setTimeout(function() {
-      lapPressTriggered = true;
-      lapBtn.classList.remove('long-press');
-      resetWatch();
-    }, 1000);
-  }
-  function onLapUp(e) {
-    e.preventDefault();
-    clearTimeout(lapPressTimer);
-    document.getElementById('lapBtn').classList.remove('long-press');
-    if (!lapPressTriggered) recordLap();
-  }
-  function onLapCancel(e) {
-    clearTimeout(lapPressTimer);
-    document.getElementById('lapBtn').classList.remove('long-press');
-  }
-
-  var lapBtn = document.getElementById('lapBtn');
-  lapBtn.addEventListener('pointerdown', onLapDown);
-  lapBtn.addEventListener('pointerup', onLapUp);
-  lapBtn.addEventListener('pointerleave', onLapCancel);
-  lapBtn.addEventListener('pointercancel', onLapCancel);
-
-  document.getElementById('soundBtn').addEventListener('click', toggleSound);
-
-  // ============================================================
-  // TEMPO: 専用ボタンで1サイクル計測
-  // 1回目押す → 計測開始
-  // 2回目押す → 計測終了 → BPM & sec/rev 表示
-  // ============================================================
-  var tempoMeasuring = false;
-  var tempoStartMs = 0;
-
-  function onTempoPress(e) {
-    e.preventDefault();
-    var btn = document.getElementById('tempoBtn');
-    var status = document.getElementById('tempoStatus');
-    var display = document.getElementById('tempoDisplay');
-
-    if (!tempoMeasuring) {
-      // 計測開始
-      tempoMeasuring = true;
-      tempoStartMs = performance.now();
-      btn.classList.add('measuring');
-      document.getElementById('tempoIcon').textContent = '⏱';
-      document.getElementById('tempoLabel').textContent = 'STOP';
-      display.style.display = 'block';
-      document.getElementById('tempoBpm').textContent = '…';
-      document.getElementById('tempoSec').textContent = '…';
-      status.textContent = 'MEASURING...';
-      beep(880, 0.05, 0.25);
-    } else {
-      // 計測終了
-      var cycleMs = performance.now() - tempoStartMs;
-      tempoMeasuring = false;
-      btn.classList.remove('measuring');
-      document.getElementById('tempoIcon').textContent = '↻';
-      document.getElementById('tempoLabel').textContent = 'TEMPO';
-
-      var cycleSec = cycleMs / 1000;
-      var bpm = 60 / cycleSec;
-      var secPerRev = cycleSec;
-
-      document.getElementById('tempoBpm').textContent = bpm.toFixed(2);
-      document.getElementById('tempoSec').textContent = secPerRev.toFixed(2);
-      status.textContent = 'TAP AGAIN TO REMEASURE';
-
-      // 履歴に追加（最大3件、新しいものが上）
-      tempoHistoryData.unshift({ bpm: bpm, sec: secPerRev });
-      if (tempoHistoryData.length > 3) tempoHistoryData.pop();
-      renderTempoHistory();
-
-      beep(1320, 0.06, 0.3);
-      setTimeout(function(){ beep(1760, 0.07, 0.25); }, 80);
-    }
-  }
-
-  var tempoHistoryData = [];
-
-  function renderTempoHistory() {
-    var hist = document.getElementById('tempoHistory');
-    var list = document.getElementById('tempoHistoryList');
-    if (tempoHistoryData.length === 0) { hist.style.display = 'none'; return; }
-    hist.style.display = 'block';
-    list.innerHTML = tempoHistoryData.map(function(h, i) {
-      return '<div style="display:flex;justify-content:space-between;align-items:center;'
-        + 'padding:3px 8px;margin-bottom:2px;border-radius:5px;'
-        + 'background:rgba(0,200,120,0.05);">'
-        + '<span style="font-size:9px;color:#00aa66;min-width:14px;">' + (i+1) + '</span>'
-        + '<span style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:600;color:#00dd99;">'
-        + h.bpm.toFixed(2)
-        + '<span style="font-size:8px;color:#00aa66;margin-left:2px;letter-spacing:1px;">RPM</span></span>'
-        + '<span style="font-family:Rajdhani,sans-serif;font-size:13px;font-weight:600;color:#00dd99;">'
-        + h.sec.toFixed(2)
-        + '<span style="font-size:8px;color:#00aa66;margin-left:2px;letter-spacing:1px;">sec/rev</span></span>'
-        + '</div>';
-    }).join('');
-  }
-
-  var tempoBtn = document.getElementById('tempoBtn');
-  tempoBtn.addEventListener('pointerdown', onTempoPress);
-
-  // Interval selector
-  document.getElementById('intervalBar').addEventListener('click', function(e) {
-    var btn = e.target.closest('.ivl-btn');
-    if (!btn) return;
-    beepInterval = parseInt(btn.dataset.ivl);
-    lastCountSec = -1; // reset so next tick recalculates
-    document.querySelectorAll('.ivl-btn').forEach(function(b) { b.classList.remove('active'); });
-    btn.classList.add('active');
-    if (soundOn) beep(660, 0.05, 0.12);
-  });
-  document.getElementById('csvBtn').addEventListener('click', exportCSV);
-
-  // --- Init ---
-  drawClock(0);
-  document.getElementById('mainTime').innerHTML = fmtGhost(0);
-
-})();
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  el.classList.add('active');
+}
+// Canvas demo draw
+var canvas = document.querySelector('canvas');
+var ctx = canvas.getContext('2d');
+var CX=150,CY=150,R=130;
+ctx.clearRect(0,0,300,300);
+// outer ring
+ctx.beginPath(); ctx.arc(CX,CY,R,0,Math.PI*2);
+ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=8; ctx.stroke();
+// progress
+ctx.beginPath(); ctx.arc(CX,CY,R,-Math.PI/2, -Math.PI/2 + Math.PI*2*0.4);
+ctx.strokeStyle='#00bfff'; ctx.lineWidth=8;
+ctx.lineCap='round'; ctx.stroke();
+// yellow segments
+for(var i=0;i<10;i++){
+  var a = -Math.PI/2 + (Math.PI*2/10)*i;
+  ctx.beginPath(); ctx.arc(CX,CY,R-16,a,a+Math.PI*2/10-0.04);
+  ctx.strokeStyle = i < 3 ? 'rgba(255,200,0,0.15)' : 'rgba(255,200,0,0.65)';
+  ctx.lineWidth=10; ctx.lineCap='butt'; ctx.stroke();
+}
 </script>
 </body>
 </html>
