@@ -933,11 +933,34 @@ canvas { width: 100%; height: 100%; display: block; }
   // COUNT BEEP
   // =====================
   var lastCountSec = -1;
+
+  // カウントダウン音声読み上げ
+  function speakCountdown(text) {
+    if (!soundOn) return;
+    var utt = new SpeechSynthesisUtterance(text);
+    utt.lang = 'en-US';
+    utt.rate = 1.0;
+    utt.pitch = 1.1;
+    utt.volume = 1.0;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utt);
+  }
+
   function checkCountBeep(ms) {
     var totalSec=Math.floor((ms+300)/1000), ivl=beepInterval, secInIvl=totalSec%ivl;
     if (secInIvl===lastCountSec) return;
     lastCountSec=secInIvl;
     var flash=false;
+
+    // 残り10秒: 20s以上のインターバールのみ発声
+    if (ivl >= 20 && secInIvl === ivl - 10 && totalSec > 0) {
+      speakCountdown('10 to go');
+    }
+    // 残り5秒: 10s以上のインターバールで発声
+    if (ivl >= 10 && secInIvl === ivl - 5 && totalSec > 0) {
+      speakCountdown('5 to go');
+    }
+
     if (secInIvl===ivl-2)      { playB(false); flash=true; countFlashColor='red'; }
     else if (secInIvl===ivl-1) { playB(false); flash=true; countFlashColor='yellow'; }
     else if (secInIvl===0&&totalSec>0) { playB(true); flash=true; countFlashColor='blue'; }
